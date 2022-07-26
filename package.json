@@ -1,0 +1,19 @@
+{
+  "name": "anystate",
+  "version": "0.0.1",
+  "description": "state management for any framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com-vyquocvu:vyquocvu/anyState.git"
+  },
+  "keywords": [
+    "state",
+    "management"
+  ],
+  "author": "Vy Quốc Vũ <vyquocvu@gmail.com>",
+  "license": "MIT"
+}

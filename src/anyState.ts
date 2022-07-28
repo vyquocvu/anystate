@@ -6,7 +6,7 @@ export function createAnyState(initialState) {
 }
 
 export function getState() {
-  return state;
+  return JSON.parse(JSON.stringify(state));;
 }
 
 export function setState(newState) {
@@ -43,7 +43,7 @@ export function watch(key, callback) {
   if (!state) {
     throw new Error('State is not initialized');
   }
-  if (typeof callback === 'function') {
+  if (typeof callback !== 'function') {
     throw new Error('callback must be a function');
   }
   if (state[key] === undefined) {

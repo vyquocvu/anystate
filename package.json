@@ -15,5 +15,8 @@
     "management"
   ],
   "author": "Vy Quốc Vũ <vyquocvu@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "seamless-immutable": "^7.1.4"
+  }
 }

@@ -1,42 +1,69 @@
+import * as Immutable from 'seamless-immutable';
+
 let state: { [key: string]: any } | null = null;
 const watchers: { key: string; callback: (state, prevState) => void; }[] = [];
 
 export function createAnyState(initialState) {
-  state = JSON.parse(JSON.stringify(initialState));
+  if (state) {
+    throw new Error('AnyState already created');
+  }
+  state = Immutable(initialState);
 }
 
 export function getState() {
-  return JSON.parse(JSON.stringify(state));;
+  return Immutable.asMutable(state);
 }
 
 export function setState(newState) {
-  const prevState = JSON.parse(JSON.stringify(state));
-  state = JSON.parse(JSON.stringify(newState));
-  watchers.forEach(watcher => watcher.callback(state, prevState));
+  state = Immutable(newState);
+  watchers.forEach(watcher => watcher.callback(state, newState));
 }
 
 export function setItem(key, value) {
+  let paths = key;
+  let prevValue = undefined;
+
+  if (!Array.isArray(key) && typeof key !== 'string' && typeof key !== 'number') {
+    throw new Error('setItem: key must be a string or an array of strings');
+  }
+
   if (!state) {
     throw new Error('State is not initialized');
   }
-  if (state[key] === undefined) {
+
+  if (typeof key === 'string') {
+    paths =  key.split('.').map((k) => /^\d+$/.test(k) ? parseInt(k, 10) : k);
+  } else if (typeof key === 'number') {
+    paths = [key];
+  }
+
+  if (Immutable.getIn(state, paths) === undefined) {
     console.warn(`Trying to set item ${key} but it doesn't exist`);
   }
-  const prevState = (state[key]);
-  state[key] = value;
+
+  prevValue = Immutable.getIn(state, paths);
+  state = Immutable.setIn(state, paths, value);
 
   watchers.forEach((watcher) => {
-    if (watcher) {
-      watcher.callback(value, prevState);
+    if (watcher && watcher.key === key) {
+      watcher.callback(value, prevValue);
     }
   });
 }
 
 export function getItem(key) {
-  if (!state) {
-    throw new Error('State is not initialized');
+  let paths = key;
+  let item = undefined;
+
+  if (!Array.isArray(key) && typeof key !== 'string' && typeof key !== 'number') {
+    throw new Error('setItem: key must be a string or an array of strings');
   }
-  return state[key];
+  if (typeof key === 'string') {
+    paths =  key.split('.').map((k) => /^\d+$/.test(k) ? parseInt(k, 10) : k);
+  }
+
+  item = Immutable.getIn(state, paths);
+  return item;
 }
 
 export function watch(key, callback) {

@@ -1,6 +1,7 @@
 {
   "name": "anystate",
   "version": "0.0.1",
+  "author": "Vy Quốc Vũ <vyquocvu@gmail.com>",
   "description": "state management for any framework",
   "main": "index.js",
   "scripts": {
@@ -8,13 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com-vyquocvu:vyquocvu/anyState.git"
+    "url": "git@github.com:vyquocvu/anyState.git"
   },
   "keywords": [
     "state",
     "management"
   ],
-  "author": "Vy Quốc Vũ <vyquocvu@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "seamless-immutable": "^7.1.4"

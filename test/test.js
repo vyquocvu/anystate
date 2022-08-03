@@ -1,27 +1,39 @@
 
-const anyState = require('../src/anyState');
-const { createAnyState, getState, setItem, getItem, watch } = anyState;
+const createAnyState = require('../src/anyState.js').createAnyState;
 
 function main () {
-  createAnyState({
-    name: 'John',
-    age: 30,
-    children: [{
-      name: 'Bob',
-      age: 5,
-    }]
+  const state = createAnyState({
+    x: 0,
   });
-  const state = getState();
-  console.log('First State', state);
-  state.name = 'Jane';
-  console.log('Not State', state);
-  console.log('Update State', getState());
-  watch('name', (newName, oldName) => {
-    console.log(`${oldName} is now ${newName}`);
-    console.log('Next State', getState());
-  })
+  console.log('state,', state.getState());
+  const state2 = createAnyState({y: 1});
 
-  setItem('name', 'Jane');
-  console.log('children', getItem('children.0'));
+  console.log('state1', state.getState());
+  state.watch('x', (x, prevX) => {
+    console.log('x changed', x, prevX);
+  });
+  state.setItem('x', 1);
+  console.log('state1 updated', state.getState());
+  console.log('state1 getItem', state.getItem(['x']));
+  console.log('state2', state2.getState());
 }
-main();
+
+function testNested () {
+  const state = createAnyState({
+    x: 0,
+    children: [
+      { y: 0 },
+      { y: 1 },
+      { y: 2 }
+    ]
+  });
+
+  state.watch('children[1].y', (x, prevX) => {
+    console.log('x changed', x, prevX);
+  });
+
+  state.setItem('children[1].y', 'xxxx');
+  console.log('state', state.getState());
+
+}
+testNested();

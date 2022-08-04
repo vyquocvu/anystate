@@ -1,7 +1,12 @@
+
 # anyState
 
 
 ## What is anyState?
+- Just an object
+- Can be updated
+- Watch any change
+- Independent any frontend frameworks
 
 ## Roadmap
 1. [x] Initialize anyState
@@ -76,7 +81,7 @@ Set state
     npm test
   ```
 
-  build:
+  dev:
   ```bash
-    npm run build
+    npm run dev
   ```

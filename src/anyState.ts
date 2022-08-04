@@ -25,7 +25,11 @@ const getIdPath = (paths: TPath[]): string => {
 
 const AnyState = function() {
   let state: { [key: string]: any } | null = null;
-  const watchers: { key: string; callback: (state, prevState) => void; }[] = [];
+  const watchers: {
+    key: string;
+    callback: (state, prevState) => void;
+    paths: TPath;
+  }[] = [];
 
   const getState = () => {
     return Immutable.asMutable(state);
@@ -39,6 +43,7 @@ const AnyState = function() {
   const setItem = (key: TPath, value: any) => {
     let paths: Key[] = [];
     let prevValue = undefined;
+    let shallowState = Immutable(state);
     let idPath = '';
 
     if (!Array.isArray(key) && typeof key !== 'string' && typeof key !== 'number') {
@@ -67,8 +72,15 @@ const AnyState = function() {
     state = Immutable.setIn(state, paths, value);
 
     watchers.forEach((watcher) => {
-      if (watcher && idPath.indexOf(watcher.key) === 0) {
-        watcher.callback(value, prevValue);
+      // if the watcher is watching the same path as the item being set
+      // children of the path will also be updated
+      if (watcher && watcher.key.indexOf(idPath) === 0) {
+        const prevValue = Immutable.getIn(shallowState, watcher.paths);
+        const nextValue = Immutable.getIn(state, watcher.paths);
+        if (typeof prevValue !== typeof nextValue) {
+          console.warn(`Type mismatch for ${key}`);
+        }
+        watcher.callback(nextValue, prevValue);
       }
     });
   }
@@ -81,7 +93,7 @@ const AnyState = function() {
       throw new Error('setItem: key must be a string or an array of strings');
     }
     if (typeof path === 'string') {
-      paths =  getPaths(path);
+      paths = getPaths(path);
     }
 
     item = Immutable.getIn(state, paths);
@@ -100,7 +112,7 @@ const AnyState = function() {
       throw new Error(`state ${key} must be defined on constructor`);
     }
     const id = getIdPath(paths);
-    watchers.push({ key: id, callback });
+    watchers.push({ key: id, callback, paths });
   }
 
   return {
@@ -109,14 +121,12 @@ const AnyState = function() {
     getState,
     getItem,
     watch,
-
   }
 };
 
 export const createAnyState = (initialState) => {
   const state = Immutable(initialState);
   const anyState = AnyState();
-  console.log("🚀 ~ file: anyState.ts ~ line 82 ~ createAnyState ~ anyState", anyState)
   anyState.setState(state);
   return anyState;
 }

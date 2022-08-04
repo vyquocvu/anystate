@@ -21,18 +21,28 @@ function main () {
 function testNested () {
   const state = createAnyState({
     x: 0,
-    children: [
-      { y: 0 },
+    k: [
+      { y:
+        {
+          z: 0,
+        }
+      },
       { y: 1 },
       { y: 2 }
     ]
   });
 
-  state.watch('children[1].y', (x, prevX) => {
-    console.log('x changed', x, prevX);
+  // watch for changes k
+  state.watch('k[0].y', (y, prevy) => {
+    console.log('y changed', prevy, 'to ', y);
   });
 
-  state.setItem('children[1].y', 'xxxx');
+  // watch for changes child of k[0]
+  state.watch('k[0].y.z', (z, prevy) => {
+    console.log('z changed', prevy, 'to ', z);
+  });
+
+  state.setItem('k[0].y', 'change');
   console.log('state', state.getState());
 
 }

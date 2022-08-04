@@ -33,6 +33,7 @@ var AnyState = function () {
     var setItem = function (key, value) {
         var paths = [];
         var prevValue = undefined;
+        var shallowState = Immutable(state);
         var idPath = '';
         if (!Array.isArray(key) && typeof key !== 'string' && typeof key !== 'number') {
             throw new Error('setItem: key must be a string or an array of strings');
@@ -56,8 +57,15 @@ var AnyState = function () {
         prevValue = Immutable.getIn(state, paths);
         state = Immutable.setIn(state, paths, value);
         watchers.forEach(function (watcher) {
-            if (watcher && idPath.indexOf(watcher.key) === 0) {
-                watcher.callback(value, prevValue);
+            // if the watcher is watching the same path as the item being set
+            // children of the path will also be updated
+            if (watcher && watcher.key.indexOf(idPath) === 0) {
+                var prevValue_1 = Immutable.getIn(shallowState, watcher.paths);
+                var nextValue = Immutable.getIn(state, watcher.paths);
+                if (typeof prevValue_1 !== typeof nextValue) {
+                    console.warn("Type mismatch for ".concat(key));
+                }
+                watcher.callback(nextValue, prevValue_1);
             }
         });
     };
@@ -85,7 +93,7 @@ var AnyState = function () {
             throw new Error("state ".concat(key, " must be defined on constructor"));
         }
         var id = getIdPath(paths);
-        watchers.push({ key: id, callback: callback });
+        watchers.push({ key: id, callback: callback, paths: paths });
     };
     return {
         setState: setState,
@@ -98,7 +106,6 @@ var AnyState = function () {
 var createAnyState = function (initialState) {
     var state = Immutable(initialState);
     var anyState = AnyState();
-    console.log("🚀 ~ file: anyState.ts ~ line 82 ~ createAnyState ~ anyState", anyState);
     anyState.setState(state);
     return anyState;
 };

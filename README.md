@@ -64,3 +64,19 @@ Set state
        // do anything
     });
   ```
+## Development
+
+  install dependencies:
+  ```bash
+    npm install
+  ```
+
+  run tests:
+  ```bash
+    npm test
+  ```
+
+  build:
+  ```bash
+    npm run build
+  ```

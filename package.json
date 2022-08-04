@@ -5,7 +5,9 @@
   "description": "state management for any framework",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test/test.js",
+    "dev": "tsc --watch src/anyState.ts",
+    "build": "tsc --watch src/anyState.ts"
   },
   "repository": {
     "type": "git",

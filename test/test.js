@@ -1,7 +1,7 @@
 
-const createAnyState = require('../src/anyState.js').createAnyState;
+const { createAnyState } = require('../src/index');
 
-function main () {
+function multipleState () {
   const state = createAnyState({
     x: 0,
   });
@@ -15,10 +15,10 @@ function main () {
   state.setItem('x', 1);
   console.log('state1 updated', state.getState());
   console.log('state1 getItem', state.getItem(['x']));
-  console.log('state2', state2.getState());
+  console.log('state2 ', state2.getState());
 }
 
-function testNested () {
+function child () {
   const state = createAnyState({
     x: 0,
     k: [
@@ -46,4 +46,4 @@ function testNested () {
   console.log('state', state.getState());
 
 }
-testNested();
+child();

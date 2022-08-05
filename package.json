@@ -3,11 +3,11 @@
   "version": "0.0.1",
   "author": "Vy Quốc Vũ <vyquocvu@gmail.com>",
   "description": "state management for any framework",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "node test/test.js",
-    "dev": "tsc --watch src/anyState.ts",
-    "build": "tsc --watch src/anyState.ts"
+    "dev": "tsc --watch src/index.ts",
+    "build": "tsc src/index.ts"
   },
   "repository": {
     "type": "git",

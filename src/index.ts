@@ -3,6 +3,10 @@ import * as Immutable from 'seamless-immutable';
 type Key = string | number;
 type TPath = Key | Key[];
 
+/**
+ * @param {string} path
+ * @returns {Key[]}
+ */
 const getPaths = (path: string): Key[] => {
   return path.split(/\[|\]|\./g)
     .reduce((acc, curr) => {
@@ -19,7 +23,11 @@ const getPaths = (path: string): Key[] => {
     } , []);
 }
 
-const getIdPath = (paths: TPath[]): string => {
+/**
+ * @param {Key[]} paths
+ * @returns {string}
+*/
+const getIdPath = (paths: Key[]): string => {
   return paths.join('/');
 }
 
@@ -31,15 +39,29 @@ const AnyState = function() {
     paths: TPath;
   }[] = [];
 
+  /**
+   *
+   * @returns {any}
+   */
   const getState = () => {
     return Immutable.asMutable(state);
   }
 
+  /**
+   *
+   * @param newState: { [key: string]: any }
+   * @returns {void}
+   */
   const setState = (newState) => {
     state = Immutable(newState);
     watchers.forEach(watcher => watcher.callback(state, newState));
   }
 
+  /**
+   * 
+   * @param key {string}
+   * @param value 
+   */
   const setItem = (key: TPath, value: any) => {
     let paths: Key[] = [];
     let prevValue = undefined;
@@ -85,6 +107,11 @@ const AnyState = function() {
     });
   }
 
+  /**
+   * 
+   * @param path {string}
+   * @returns 
+   */
   const getItem = (path: TPath[] | string) => {
     let paths = path;
     let item = undefined;
@@ -100,6 +127,11 @@ const AnyState = function() {
     return item;
   }
 
+  /**
+   *
+   * @param key {string}
+   * @param callback {(state, prevState) => void}
+   */
   const watch = (key, callback) => {
     if (!state) {
       throw new Error('State is not initialized');
@@ -130,5 +162,3 @@ export const createAnyState = (initialState) => {
   anyState.setState(state);
   return anyState;
 }
-
-export default AnyState;

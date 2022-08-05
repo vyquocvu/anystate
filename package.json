@@ -1,6 +1,6 @@
 {
   "name": "anystate",
-  "version": "0.0.1",
+  "version": "0.0.1a",
   "author": "Vy Quốc Vũ <vyquocvu@gmail.com>",
   "description": "state management for any framework",
   "main": "src/index.js",

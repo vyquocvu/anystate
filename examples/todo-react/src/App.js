@@ -5,9 +5,10 @@ import ButtonCreate from './buttonCreate';
 import TodoItem from './TodoItem';
 
 function App() {
-  const [todos, setTodos] = useState(store.getState().todos.asMutable());
+  const [todos, setTodos] = useState(store.getItem('todos') || []);
   store.watch('todos', (newTodos) => {
-    setTodos(newTodos.asMutable())
+    console.log('newTodos', newTodos)
+    setTodos(newTodos)
   });
   console.log('todos', todos);
 

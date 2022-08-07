@@ -3,16 +3,14 @@ import { store } from './store';
 const TodoItem = ({ onClick, completed, item, index }) => {
 
   const removeItem = () => {
-    const { todos } = store.getState();
+    let todos = store.getItem('todos');
     store.setItem('todos', todos.filter((_, i) => i !== index));
   }
 
   const toggleTodo = (e) => {
     // TODO update get State
-    let { todos } = store.getState();
-    let currentTodo = todos[index];
-    currentTodo = currentTodo.setIn(['status'], e.target.checked ? 'done' : '');
-    todos = todos.setIn([index], currentTodo);
+    let todos = store.getItem('todos');
+    todos[index].status = e.target.checked ? 'done' : '';
     store.setItem('todos', todos);
   }
   return (

@@ -5,7 +5,7 @@ import { store } from './store';
 const ButtonCreate = () => {
   const [text, setText] = useState('');
   const onClick = () => {
-    const { todos } = store.getState()
+    const todos = store.getItem('todos')
     store.setItem('todos', todos.concat({
       text: text,
       status: ''

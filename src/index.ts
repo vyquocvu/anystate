@@ -44,7 +44,7 @@ const AnyState = function() {
    * @returns {any}
    */
   const getState = () => {
-    return Immutable.asMutable(state);
+    return Immutable.asMutable(state, { deep: true });
   }
 
   /**
@@ -58,9 +58,9 @@ const AnyState = function() {
   }
 
   /**
-   * 
+   *
    * @param key {string}
-   * @param value 
+   * @param value
    */
   const setItem = (key: TPath, value: any) => {
     let paths: Key[] = [];
@@ -108,9 +108,9 @@ const AnyState = function() {
   }
 
   /**
-   * 
+   *
    * @param path {string}
-   * @returns 
+   * @returns
    */
   const getItem = (path: TPath[] | string) => {
     let paths = path;
@@ -124,7 +124,7 @@ const AnyState = function() {
     }
 
     item = Immutable.getIn(state, paths);
-    return item;
+    return Immutable.asMutable(item, { deep: true });
   }
 
   /**

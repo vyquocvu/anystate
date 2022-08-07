@@ -36,7 +36,7 @@ var AnyState = function () {
      * @returns {any}
      */
     var getState = function () {
-        return Immutable.asMutable(state);
+        return Immutable.asMutable(state, { deep: true });
     };
     /**
      *
@@ -106,7 +106,7 @@ var AnyState = function () {
             paths = getPaths(path);
         }
         item = Immutable.getIn(state, paths);
-        return item;
+        return Immutable.asMutable(item, { deep: true });
     };
     /**
      *

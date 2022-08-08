@@ -88,3 +88,7 @@ Set state
 
 ## Examples
   [React Todo](/examples/todo-react)
+  [Solid Todo](/examples/todo-solid)
+
+## License
+  MIT

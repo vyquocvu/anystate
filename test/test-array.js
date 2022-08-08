@@ -6,6 +6,10 @@ const { createAnyState } = require('../src/index');
   });
   const items = state.getItem(['items']);
   // const { items } = state.getState();
+  state.watch('items[0]', (items, prevItems) => {
+    console.log('items[0] changed', prevItems, 'to ', items);
+  });
+
 
   console.log('items', items);
   // items []

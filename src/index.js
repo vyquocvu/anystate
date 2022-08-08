@@ -54,7 +54,6 @@ var AnyState = function () {
      */
     var setItem = function (key, value) {
         var paths = [];
-        var prevValue = undefined;
         var shallowState = Immutable(state);
         var idPath = '';
         if (!Array.isArray(key) && typeof key !== 'string' && typeof key !== 'number') {
@@ -76,18 +75,18 @@ var AnyState = function () {
         if (Immutable.getIn(state, paths) === undefined) {
             console.warn("Trying to set item ".concat(key, " but it doesn't exist"));
         }
-        prevValue = Immutable.getIn(state, paths);
         state = Immutable.setIn(state, paths, value);
         watchers.forEach(function (watcher) {
+            var _a, _b;
             // if the watcher is watching the same path as the item being set
             // children of the path will also be updated
             if (watcher && watcher.key.indexOf(idPath) === 0) {
-                var prevValue_1 = Immutable.getIn(shallowState, watcher.paths);
-                var nextValue = Immutable.getIn(state, watcher.paths);
-                if (typeof prevValue_1 !== typeof nextValue) {
+                var prevValue = (_a = Immutable.getIn(shallowState, watcher.paths)) === null || _a === void 0 ? void 0 : _a.asMutable({ deep: true });
+                var nextValue = (_b = Immutable.getIn(state, watcher.paths)) === null || _b === void 0 ? void 0 : _b.asMutable({ deep: true });
+                if (typeof prevValue !== typeof nextValue) {
                     console.warn("Type mismatch for ".concat(key));
                 }
-                watcher.callback(nextValue, prevValue_1);
+                watcher.callback(nextValue, prevValue);
             }
         });
     };
@@ -122,7 +121,7 @@ var AnyState = function () {
         }
         var paths = getPaths(key);
         if (Immutable.getIn(state, paths) === undefined) {
-            throw new Error("state ".concat(key, " must be defined on constructor"));
+            console.warn("Trying to watch item ".concat(key, " but it doesn't exist"));
         }
         var id = getIdPath(paths);
         watchers.push({ key: id, callback: callback, paths: paths });

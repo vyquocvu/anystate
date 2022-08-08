@@ -64,7 +64,6 @@ const AnyState = function() {
    */
   const setItem = (key: TPath, value: any) => {
     let paths: Key[] = [];
-    let prevValue = undefined;
     let shallowState = Immutable(state);
     let idPath = '';
 
@@ -90,15 +89,14 @@ const AnyState = function() {
       console.warn(`Trying to set item ${key} but it doesn't exist`);
     }
 
-    prevValue = Immutable.getIn(state, paths);
     state = Immutable.setIn(state, paths, value);
 
     watchers.forEach((watcher) => {
       // if the watcher is watching the same path as the item being set
       // children of the path will also be updated
       if (watcher && watcher.key.indexOf(idPath) === 0) {
-        const prevValue = Immutable.getIn(shallowState, watcher.paths);
-        const nextValue = Immutable.getIn(state, watcher.paths);
+        const prevValue = Immutable.getIn(shallowState, watcher.paths)?.asMutable({ deep: true });
+        const nextValue = Immutable.getIn(state, watcher.paths)?.asMutable({ deep: true });
         if (typeof prevValue !== typeof nextValue) {
           console.warn(`Type mismatch for ${key}`);
         }
@@ -141,7 +139,7 @@ const AnyState = function() {
     }
     const paths = getPaths(key);
     if (Immutable.getIn(state, paths) === undefined) {
-      throw new Error(`state ${key} must be defined on constructor`);
+      console.warn(`Trying to watch item ${key} but it doesn't exist`);
     }
     const id = getIdPath(paths);
     watchers.push({ key: id, callback, paths });

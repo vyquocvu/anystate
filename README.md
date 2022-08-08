@@ -13,8 +13,6 @@
 2. [x] Simple state
 3. [x] Deep state
 4. [x] Deep State with transitions
-5. [ ] Deep State with transitions and guards
-6. [ ] Deep State with transitions and guards and actions
 
 ## Usage
 
@@ -88,6 +86,7 @@ Set state
 
 ## Examples
   [React Todo](/examples/todo-react)
+  
   [Solid Todo](/examples/todo-solid)
 
 ## License

@@ -3,11 +3,11 @@
   "version": "0.0.1-c",
   "author": "Vy Quốc Vũ <vyquocvu@gmail.com>",
   "description": "state management for any framework",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "node test/test.js",
     "dev": "tsc --watch src/index.ts",
-    "build": "tsc src/index.ts"
+    "build": "tsc src/index.ts && uglifyjs src/index.js  --compress --mangle -o dist/index.js"
   },
   "repository": {
     "type": "git",
@@ -18,7 +18,8 @@
     "management"
   ],
   "license": "MIT",
-  "dependencies": {
-    "seamless-immutable": "^7.1.4"
+  "dependencies": {},
+  "devDependencies": {
+    "uglify-js": "^3.16.3"
   }
 }

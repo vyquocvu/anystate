@@ -1,7 +1,47 @@
-import * as Immutable from 'seamless-immutable';
-
 type Key = string | number;
 type TPath = Key | Key[];
+
+const Immutable = function(initialized) {
+  const object = JSON.parse(JSON.stringify(initialized));
+  return object;
+}
+
+Immutable.getIn = function(state, keys: Key[]) {
+  let cursor = state;
+  keys.forEach((key) => {
+    if (cursor === undefined) {
+      return;
+    }
+    cursor = cursor[key];
+  })
+  return cursor;
+}
+
+Immutable.setIn = function(state, paths: Key[], value) {
+  let cursor = state;
+  let cloneValue =  value;
+  if (typeof value === 'object') {
+    cloneValue = Immutable(value);
+  }
+  paths.forEach((path, index) => {
+    if (cursor === undefined) {
+      return;
+    }
+    if (index === paths.length - 1) {
+      cursor[path] = cloneValue;
+    } else {
+      cursor = cursor[path];
+    }
+  })
+  return state;
+}
+
+Immutable.asMutable = function(value) {
+  if (typeof value === 'object') {
+    return JSON.parse(JSON.stringify(value));
+  }
+  return value;
+}
 
 /**
  * @param {string} path
@@ -36,7 +76,7 @@ const AnyState = function() {
   const watchers: {
     key: string;
     callback: (state, prevState) => void;
-    paths: TPath;
+    paths: Key[];
   }[] = [];
 
   /**
@@ -44,7 +84,7 @@ const AnyState = function() {
    * @returns {any}
    */
   const getState = () => {
-    return Immutable.asMutable(state, { deep: true });
+    return Immutable.asMutable(state);
   }
 
   /**
@@ -95,8 +135,8 @@ const AnyState = function() {
       // if the watcher is watching the same path as the item being set
       // children of the path will also be updated
       if (watcher && watcher.key.indexOf(idPath) === 0) {
-        const prevValue = Immutable.getIn(shallowState, watcher.paths)?.asMutable({ deep: true });
-        const nextValue = Immutable.getIn(state, watcher.paths)?.asMutable({ deep: true });
+        const prevValue = Immutable.getIn(shallowState, watcher.paths);
+        const nextValue = Immutable.getIn(state, watcher.paths);
         if (typeof prevValue !== typeof nextValue) {
           console.warn(`Type mismatch for ${key}`);
         }
@@ -110,8 +150,8 @@ const AnyState = function() {
    * @param path {string}
    * @returns
    */
-  const getItem = (path: TPath[] | string) => {
-    let paths = path;
+  const getItem = (path: Key[] | string) => {
+    let paths = path as Key[];
     let item = undefined;
 
     if (!Array.isArray(path) && typeof path !== 'string' && typeof path !== 'number') {
@@ -122,7 +162,7 @@ const AnyState = function() {
     }
 
     item = Immutable.getIn(state, paths);
-    return Immutable.asMutable(item, { deep: true });
+    return Immutable.asMutable(item);
   }
 
   /**

@@ -14,6 +14,7 @@
 3. [x] getItem/setItem
 4. [x] Watch onChange
 5. [ ] Watch onChange with deep optio (inspire by vue)
+
 ...
 
 

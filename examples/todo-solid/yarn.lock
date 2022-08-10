@@ -330,12 +330,10 @@ ansi-styles@^3.2.1:
   dependencies:
     color-convert "^1.9.0"
 
-anystate@^0.0.1-b:
-  version "0.0.1-b"
-  resolved "https://registry.yarnpkg.com/anystate/-/anystate-0.0.1-b.tgz#59e8387fb380592797ab991a59c8522632dbd7dd"
-  integrity sha512-16hsQfHUwdtJeM+1eCOyEzCBcQkSBghyHD0GvdQvYmvwPADgclAC8Ff0pLcXvI3wn2H7MkvN94fFnRQersJZIw==
-  dependencies:
-    seamless-immutable "^7.1.4"
+anystate@^0.0.1-d:
+  version "0.0.1-d"
+  resolved "https://registry.yarnpkg.com/anystate/-/anystate-0.0.1-d.tgz#931f08035b331f3d993b96936257bb3b356e87ee"
+  integrity sha512-tB22jxlRPw3O3r4nB6gdSZeu2ujRiGAUxjiBJ+IT+X6p8FYH0dHkYU1UNvSdyDut8ZnhuiLxVfKm0t+0Zk+O3w==
 
 babel-plugin-jsx-dom-expressions@^0.33.14:
   version "0.33.14"
@@ -672,11 +670,6 @@ safe-buffer@~5.1.1:
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.1.2.tgz#991ec69d296e0313747d59bdfd2b745c35f8828d"
   integrity sha512-Gd2UZBJDkXlY7GbJxfsE8/nvKkUEU1G38c1siN6QP6a9PT9MmHB8GnpscSmMJSoF8LOIrt8ud/wPtojys4G6+g==
-
-seamless-immutable@^7.1.4:
-  version "7.1.4"
-  resolved "https://registry.yarnpkg.com/seamless-immutable/-/seamless-immutable-7.1.4.tgz#6e9536def083ddc4dea0207d722e0e80d0f372f8"
-  integrity sha512-XiUO1QP4ki4E2PHegiGAlu6r82o5A+6tRh7IkGGTVg/h+UoeX4nFBeCGPOhb4CYjvkqsfm/TUtvOMYC1xmV30A==
 
 semver@^6.3.0:
   version "6.3.0"

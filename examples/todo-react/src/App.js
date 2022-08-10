@@ -7,10 +7,8 @@ import TodoItem from './TodoItem';
 function App() {
   const [todos, setTodos] = useState(store.getItem('todos') || []);
   store.watch('todos', (newTodos) => {
-    console.log('newTodos', newTodos)
     setTodos(newTodos)
   });
-  console.log('todos', todos);
 
   return (
     <div className="App">

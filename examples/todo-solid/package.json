@@ -13,7 +13,7 @@
     "vite-plugin-solid": "2.3.0"
   },
   "dependencies": {
-    "anystate": "^0.0.1-b",
+    "anystate": "^0.0.1-d",
     "solid-js": "1.4.8"
   }
 }

@@ -5,7 +5,7 @@
   "description": "state management for any framework",
   "main": "dist/index.js",
   "scripts": {
-    "test": "node test/test.js",
+    "test": "mocha",
     "dev": "tsc --watch src/index.ts",
     "build": "tsc src/index.ts && uglifyjs src/index.js  --compress --mangle -o dist/index.js"
   },
@@ -20,6 +20,8 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
+    "@types/node": "17.0.29",
+    "mocha": "^10.0.0",
     "uglify-js": "^3.16.3"
   }
 }

@@ -4,15 +4,19 @@
 
 ## What is anyState?
 - Just an object
-- Can be updated
-- Watch any change
+- Can must be update via setter
+- Watch state changed
 - Independent any frontend frameworks
 
 ## Roadmap
 1. [x] Initialize anyState
 2. [x] Simple state
-3. [x] Deep state
-4. [x] Deep State with transitions
+3. [x] getItem/setItem
+4. [x] Watch onChange
+5. [ ] Watch onChange with deep option (inspire by vue)
+
+...
+
 
 ## Usage
 
@@ -32,10 +36,10 @@ Set state
   ```js
     anyState.setState({
       name: 'John',
-      age: 30,
+      age: 32,
       children: [{
         name: 'Bob',
-        age: 5,
+        age: 4,
       }]
     });
   ```

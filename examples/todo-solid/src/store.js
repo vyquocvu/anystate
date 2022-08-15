@@ -1,5 +1,5 @@
-import { createAnyState } from "anystate"
+import { createStore } from "anystate"
 
-export const store = createAnyState({
+export const store = createStore({
   todos: [],
 });

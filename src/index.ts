@@ -12,7 +12,7 @@ const getIn = (state, keys: Key[]) => {
 
 const clonedValues = (value) => {
   if (typeof value === 'object') {
-    return value;
+    return JSON.parse(JSON.stringify(value));
   }
   return value;
 }
@@ -21,7 +21,7 @@ const setIn = (state, paths: Key[], value) => {
   let cursor = state;
   let cloneValue =  value;
   if (typeof value === 'object') {
-    cloneValue = (value);
+    cloneValue = clonedValues(value);
   }
   paths.forEach((path, index) => {
     if (cursor === undefined) {
@@ -34,13 +34,6 @@ const setIn = (state, paths: Key[], value) => {
     }
   })
   return state;
-}
-
-const toObject = (value) => {
-  if (typeof value === 'object') {
-    return clonedValues(value);
-  }
-  return value;
 }
 
 /**
@@ -77,11 +70,19 @@ const AnyState = function(initialized) {
     paths: Key[];
     callback: (state, prevState) => void;
   }[] = [];
+  const proxiesStack = [];
 
   var validator = (route = []) => ({
     get(target, key) {
-      if (typeof target[key] === 'object' && target[key] !== null) {
-        const childRoute = route.concat([key]);
+      const childRoute = route.concat([key]);
+      // children are object validated
+      // proxy are not existed
+
+      if (
+        target[key] !== null &&
+        typeof target[key] === 'object' &&
+        !proxiesStack.includes(childRoute)
+      ) {
         return new Proxy(target[key], validator(childRoute));
       }
       return target[key];
@@ -114,7 +115,7 @@ const AnyState = function(initialized) {
    * @returns {any}
    */
   const getState = () => {
-    return toObject(state);
+    return clonedValues(state);
   }
 
   /**
@@ -148,16 +149,18 @@ const AnyState = function(initialized) {
     } else if (Array.isArray(key)) {
       paths = key;
     }
+
     if (getIn(state, paths) === undefined) {
       console.warn(`Trying to set item ${key} but it doesn't exist`);
     }
+
     state = setIn(state, paths, value);
   }
 
   /**
    *
    * @param path {string}
-   * @returns
+   * @returns {any}
    */
   const getItem = (path: Key[] | string) => {
     let paths = path as Key[];
@@ -171,7 +174,7 @@ const AnyState = function(initialized) {
     }
 
     item = getIn(state, paths);
-    return toObject(item);
+    return clonedValues(item);
   }
 
   /**
@@ -203,7 +206,7 @@ const AnyState = function(initialized) {
   }
 };
 
-export const createAnyState = (initialState) => {
+export const createStore = (initialState) => {
   const anyState = AnyState(clonedValues(initialState));
   return anyState;
 }

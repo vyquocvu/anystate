@@ -1,6 +1,6 @@
 "use strict";
 exports.__esModule = true;
-exports.createAnyState = void 0;
+exports.createStore = void 0;
 var getIn = function (state, keys) {
     var cursor = state;
     keys.forEach(function (key) {
@@ -12,7 +12,7 @@ var getIn = function (state, keys) {
 };
 var clonedValues = function (value) {
     if (typeof value === 'object') {
-        return value;
+        return JSON.parse(JSON.stringify(value));
     }
     return value;
 };
@@ -20,7 +20,7 @@ var setIn = function (state, paths, value) {
     var cursor = state;
     var cloneValue = value;
     if (typeof value === 'object') {
-        cloneValue = (value);
+        cloneValue = clonedValues(value);
     }
     paths.forEach(function (path, index) {
         if (cursor === undefined) {
@@ -34,12 +34,6 @@ var setIn = function (state, paths, value) {
         }
     });
     return state;
-};
-var toObject = function (value) {
-    if (typeof value === 'object') {
-        return clonedValues(value);
-    }
-    return value;
 };
 /**
  * @param {string} path
@@ -69,12 +63,17 @@ var getIdPath = function (paths) {
 };
 var AnyState = function (initialized) {
     var watchers = [];
+    var proxiesStack = [];
     var validator = function (route) {
         if (route === void 0) { route = []; }
         return ({
             get: function (target, key) {
-                if (typeof target[key] === 'object' && target[key] !== null) {
-                    var childRoute = route.concat([key]);
+                var childRoute = route.concat([key]);
+                // children are object validated
+                // proxy are not existed
+                if (target[key] !== null &&
+                    typeof target[key] === 'object' &&
+                    !proxiesStack.includes(childRoute)) {
                     return new Proxy(target[key], validator(childRoute));
                 }
                 return target[key];
@@ -106,7 +105,7 @@ var AnyState = function (initialized) {
      * @returns {any}
      */
     var getState = function () {
-        return toObject(state);
+        return clonedValues(state);
     };
     /**
      *
@@ -146,7 +145,7 @@ var AnyState = function (initialized) {
     /**
      *
      * @param path {string}
-     * @returns
+     * @returns {any}
      */
     var getItem = function (path) {
         var paths = path;
@@ -158,7 +157,7 @@ var AnyState = function (initialized) {
             paths = getPaths(path);
         }
         item = getIn(state, paths);
-        return toObject(item);
+        return clonedValues(item);
     };
     /**
      *
@@ -187,8 +186,8 @@ var AnyState = function (initialized) {
         watch: watch
     };
 };
-var createAnyState = function (initialState) {
+var createStore = function (initialState) {
     var anyState = AnyState(clonedValues(initialState));
     return anyState;
 };
-exports.createAnyState = createAnyState;
+exports.createStore = createStore;

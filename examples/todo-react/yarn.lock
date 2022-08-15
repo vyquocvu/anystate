@@ -2449,10 +2449,10 @@ anymatch@^3.0.3, anymatch@~3.1.2:
     normalize-path "^3.0.0"
     picomatch "^2.0.4"
 
-anystate@0.0.1-d:
-  version "0.0.1-d"
-  resolved "https://registry.yarnpkg.com/anystate/-/anystate-0.0.1-d.tgz#931f08035b331f3d993b96936257bb3b356e87ee"
-  integrity sha512-tB22jxlRPw3O3r4nB6gdSZeu2ujRiGAUxjiBJ+IT+X6p8FYH0dHkYU1UNvSdyDut8ZnhuiLxVfKm0t+0Zk+O3w==
+anystate@0.0.2-a:
+  version "0.0.2-a"
+  resolved "https://registry.yarnpkg.com/anystate/-/anystate-0.0.2-a.tgz#dda74b4628b305bb8b924cf5438649c7fc2e5b43"
+  integrity sha512-fnX4VQxQ280fERa9Irqmp9Is6or7QTtbaM+LD2w8xHIMW5hxz0q8Q+TWpHaIutI5PMb/0P+PPqpiS+25/R5sdw==
 
 arg@^5.0.2:
   version "5.0.2"

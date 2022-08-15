@@ -20,9 +20,9 @@
 
 ## Usage
 
-Initialize anyState object with `createAnyState()`
+Initialize anyState object with `createStore()`
   ```js
-    const anyState =  createAnyState({
+    const anyState =  createStore({
       name: 'John',
       age: 30,
       children: [{

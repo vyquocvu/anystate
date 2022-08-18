@@ -8,12 +8,13 @@
 - Watch state changed
 - Independent any frontend frameworks
 
+Back to basic, callback function is a point. I put handle onChange in callback functions, this is hava identify string to make sure target state has been updated. So, that we can get any changes from any where.
+
 ## Roadmap
 1. [x] Initialize anyState
 2. [x] Simple state
 3. [x] getItem/setItem
 4. [x] Watch onChange
-5. [ ] Watch onChange with deep option (inspire by vue)
 
 ...
 

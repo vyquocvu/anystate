@@ -1,5 +1,4 @@
-type Key = string | number;
-type TPath = Key | Key[];
+import type { Key, TPath } from './type';
 
 const getIn = (state, keys: Key[]) => {
   let cursor = state;

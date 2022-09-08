@@ -3,11 +3,11 @@
   "version": "0.0.2-a",
   "author": "Vy Quốc Vũ <vyquocvu@gmail.com>",
   "description": "state management for any framework",
-  "main": "dist/index.js",
+  "main": "dist/bundle.js",
   "scripts": {
     "test": "mocha",
     "dev": "tsc --watch src/index.ts",
-    "build": "tsc src/index.ts && uglifyjs src/index.js  --compress --mangle -o dist/index.js"
+    "build": "tsc src/index.ts --outDir dist/ && uglifyjs dist/index.js  --compress --mangle -o dist/bundle.js"
   },
   "repository": {
     "type": "git",
@@ -20,8 +20,16 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
+    "@size-limit/preset-small-lib": "^8.1.0",
     "@types/node": "17.0.29",
     "mocha": "^10.0.0",
+    "size-limit": "^8.1.0",
     "uglify-js": "^3.16.3"
-  }
+  },
+  "size-limit": [
+    {
+      "path": "dist/bundle.js",
+      "limit": "5 kB"
+    }
+  ]
 }

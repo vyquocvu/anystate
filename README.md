@@ -93,6 +93,8 @@ Set state
   [React Todo](/examples/todo-react)
   
   [Solid Todo](/examples/todo-solid)
-
+  
+  [Svelte Todo](/examples/todo-svelte)
+  
 ## License
   MIT

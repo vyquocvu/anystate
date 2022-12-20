@@ -3,7 +3,8 @@
 
 
 ## What is anyState?
-- Just an object
+anystate is a tiny state management library for any framework!
+- Just an object has observable function
 - Can must be update via setter
 - Watch state changed
 - Independent any frontend frameworks

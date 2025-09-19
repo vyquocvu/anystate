@@ -233,3 +233,31 @@ export const createStore = (initialState) => {
   const anyState = AnyState(clonedValues(initialState));
   return anyState;
 }
+
+// Export React hooks integration
+export { useAnyState, useAnyStateMultiple } from './react';
+
+// Export Vue composables integration
+export { 
+  useAnyState as useAnyStateVue, 
+  useAnyStateMultiple as useAnyStateMultipleVue,
+  useAnyStateComputed 
+} from './vue';
+
+// Export Svelte stores integration
+export {
+  createAnyStateStore,
+  createAnyStateStores,
+  createAnyStateDerived,
+  createAnyStateReadable
+} from './svelte';
+
+// Export persistence plugins
+export {
+  addPersistence,
+  localStoragePlugin,
+  sessionStoragePlugin,
+  indexedDBPlugin,
+  createCustomPlugin
+} from './persistence';
+export type { PersistencePlugin, PersistenceOptions } from './persistence';

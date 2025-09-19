@@ -40,10 +40,10 @@ pnpm add anystate
 - [x] Watch onChange functionality
 - [x] Vue-like multiple property watching
 - [x] TypeScript support
-- [ ] React hooks integration
-- [ ] Vue composables
-- [ ] Svelte stores compatibility
-- [ ] Persistence plugins
+- [x] React hooks integration
+- [x] Vue composables
+- [x] Svelte stores compatibility
+- [x] Persistence plugins
 
 
 ## Usage
@@ -203,29 +203,194 @@ Watches for changes at specified paths.
 - `pathOrObject` (string | Object): Path string or object with path-callback pairs
 - `callback` (Function): Callback function for string paths `(newValue, oldValue) => void`
 
+### React Hooks
+
+#### `useAnyState(store, path)`
+React hook for subscribing to store values.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `path` (string): Dot notation path to watch
+
+**Returns:** `[value, setValue]` tuple similar to React's `useState`
+
+#### `useAnyStateMultiple(store, paths)`
+React hook for subscribing to multiple store values.
+
+**Parameters:**
+- `store` (Store): anyState store instance  
+- `paths` (Object): Object mapping property names to paths
+
+**Returns:** Object with values and setter functions
+
+### Vue Composables
+
+#### `useAnyStateVue(store, path)` 
+Vue composable for subscribing to store values.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `path` (string): Dot notation path to watch
+
+**Returns:** `[ref, setValue]` tuple with reactive ref and setter function
+
+#### `useAnyStateMultipleVue(store, paths)`
+Vue composable for subscribing to multiple store values.
+
+**Parameters:**
+- `store` (Store): anyState store instance  
+- `paths` (Object): Object mapping property names to paths
+
+**Returns:** Reactive object with values and setter functions
+
+#### `useAnyStateComputed(store, paths, computeFn)`
+Vue composable for creating computed properties from store values.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `paths` (Array): Array of paths to watch
+- `computeFn` (Function): Function to compute derived value
+
+**Returns:** Computed ref
+
+### Svelte Stores
+
+#### `createAnyStateStore(store, path)`
+Creates a Svelte writable store from an anyState path.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `path` (string): Dot notation path to watch
+
+**Returns:** Svelte writable store with `subscribe`, `set`, `update`, and `destroy` methods
+
+#### `createAnyStateStores(store, paths)`
+Creates multiple Svelte stores from anyState paths.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `paths` (Object): Object mapping store names to paths
+
+**Returns:** Object with Svelte writable stores
+
+#### `createAnyStateDerived(store, paths, deriveFn)`
+Creates a Svelte derived store from multiple anyState paths.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `paths` (Array): Array of paths to watch
+- `deriveFn` (Function): Function to derive the value
+
+**Returns:** Svelte derived store
+
+#### `createAnyStateReadable(store, path)`
+Creates a Svelte readable store from an anyState path.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `path` (string): Dot notation path to watch
+
+**Returns:** Svelte readable store
+
+### Persistence Plugins
+
+#### `addPersistence(store, options)`
+Adds persistence capabilities to an anyState store.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `options` (Object): Persistence configuration
+  - `plugins` (Array): Array of persistence plugins (default: [localStoragePlugin()])
+  - `paths` (Array): Specific paths to persist (default: [] - all state)
+  - `throttle` (number): Save throttle in milliseconds (default: 1000)
+  - `autoSave` (boolean): Enable automatic saving on changes (default: true)
+
+**Returns:** Object with `save()`, `load()`, `clear()`, and `destroy()` methods
+
+#### Built-in Plugins
+
+##### `localStoragePlugin(key)`
+Persists state to browser localStorage.
+
+##### `sessionStoragePlugin(key)`
+Persists state to browser sessionStorage.
+
+##### `indexedDBPlugin(dbName, storeName, key)`
+Persists state to browser IndexedDB.
+
+##### `createCustomPlugin(name, load, save, clear)`
+Creates a custom persistence plugin.
+
 ## Framework Integration Examples
+
+### React Hooks Integration
+
+anyState now provides built-in React hooks for seamless integration:
+
+#### `useAnyState(store, path)`
+A React hook that subscribes to a specific path in the store and returns a stateful value and a setter function.
+
+```jsx
+import { createStore, useAnyState } from 'anystate';
+
+const store = createStore({ 
+  user: { name: 'John', age: 30 },
+  todos: []
+});
+
+function UserComponent() {
+  const [name, setName] = useAnyState(store, 'user.name');
+  const [age, setAge] = useAnyState(store, 'user.age');
+  
+  return (
+    <div>
+      <h2>{name} ({age} years old)</h2>
+      <button onClick={() => setAge(age + 1)}>
+        Birthday! 🎂
+      </button>
+    </div>
+  );
+}
+```
+
+#### `useAnyStateMultiple(store, paths)`
+For watching multiple values at once:
+
+```jsx
+function UserForm() {
+  const userData = useAnyStateMultiple(store, {
+    name: 'user.name',
+    age: 'user.age',
+    email: 'user.email'
+  });
+  
+  return (
+    <form>
+      <input 
+        value={userData.name} 
+        onChange={(e) => userData.setName(e.target.value)} 
+      />
+      <input 
+        value={userData.age} 
+        onChange={(e) => userData.setAge(e.target.value)} 
+      />
+      <input 
+        value={userData.email} 
+        onChange={(e) => userData.setEmail(e.target.value)} 
+      />
+    </form>
+  );
+}
+```
 
 ### React Hook Example
 ```jsx
-import { createStore } from 'anystate';
-import { useState, useEffect } from 'react';
+import { createStore, useAnyState } from 'anystate';
 
 const store = createStore({ count: 0 });
 
-function useAnyState(path) {
-  const [value, setValue] = useState(() => store.getItem(path));
-  
-  useEffect(() => {
-    return store.watch(path, (newValue) => setValue(newValue));
-  }, [path]);
-  
-  const updateValue = (newValue) => store.setItem(path, newValue);
-  
-  return [value, updateValue];
-}
-
 function Counter() {
-  const [count, setCount] = useAnyState('count');
+  const [count, setCount] = useAnyState(store, 'count');
   
   return (
     <div>
@@ -236,9 +401,95 @@ function Counter() {
     </div>
   );
 }
+
+// You can also use the hook with nested paths
+function UserProfile() {
+  const [name, setName] = useAnyState(store, 'user.name');
+  const [age, setAge] = useAnyState(store, 'user.age');
+  
+  return (
+    <div>
+      <input 
+        value={name} 
+        onChange={(e) => setName(e.target.value)} 
+        placeholder="Name" 
+      />
+      <input 
+        type="number" 
+        value={age} 
+        onChange={(e) => setAge(parseInt(e.target.value))} 
+        placeholder="Age" 
+      />
+    </div>
+  );
+}
 ```
 
-### Vue Composition API Example
+### Vue Composables Integration
+
+anyState provides Vue 3 composables for seamless integration with Vue's reactivity system:
+
+#### `useAnyStateVue(store, path)`
+A Vue composable that creates a reactive ref for a store value.
+
+```vue
+<template>
+  <div>
+    <h2>{{ name }} ({{ age }} years old)</h2>
+    <button @click="birthday">Birthday! 🎂</button>
+  </div>
+</template>
+
+<script setup>
+import { createStore, useAnyStateVue } from 'anystate';
+
+const store = createStore({ 
+  user: { name: 'John', age: 30 }
+});
+
+const [name, setName] = useAnyStateVue(store, 'user.name');
+const [age, setAge] = useAnyStateVue(store, 'user.age');
+
+const birthday = () => setAge(age.value + 1);
+</script>
+```
+
+#### `useAnyStateMultipleVue(store, paths)`
+For managing multiple store values:
+
+```vue
+<script setup>
+import { useAnyStateMultipleVue } from 'anystate';
+
+const userData = useAnyStateMultipleVue(store, {
+  name: 'user.name',
+  age: 'user.age',
+  email: 'user.email'
+});
+
+// Access values: userData.name.value, userData.age.value
+// Set values: userData.setName('New Name'), userData.setAge(25)
+</script>
+```
+
+#### `useAnyStateComputed(store, paths, computeFn)`
+For computed values derived from store data:
+
+```vue
+<script setup>
+import { useAnyStateComputed } from 'anystate';
+
+const fullName = useAnyStateComputed(
+  store,
+  ['user.firstName', 'user.lastName'],
+  (first, last) => `${first} ${last}`
+);
+
+// fullName.value will automatically update when firstName or lastName change
+</script>
+```
+
+### Vue Composition API Example (Manual Integration)
 ```vue
 <template>
   <div>
@@ -270,6 +521,198 @@ const increment = () => {
   store.setItem('count', store.getItem('count') + 1);
 };
 </script>
+```
+
+### Vue Composition API Example (With Composables)
+```vue
+<template>
+  <div>
+    <p>Count: {{ count }}</p>
+    <button @click="increment">Increment</button>
+  </div>
+</template>
+
+<script setup>
+import { createStore, useAnyStateVue } from 'anystate';
+
+const store = createStore({ count: 0 });
+const [count, setCount] = useAnyStateVue(store, 'count');
+
+const increment = () => {
+  setCount(count.value + 1);
+};
+</script>
+```
+
+### Svelte Stores Integration
+
+anyState provides seamless integration with Svelte's store system:
+
+#### `createAnyStateStore(store, path)`
+Creates a Svelte writable store that stays in sync with anyState.
+
+```svelte
+<script>
+  import { createStore, createAnyStateStore } from 'anystate';
+  
+  const store = createStore({ 
+    user: { name: 'John', age: 30 }
+  });
+  
+  const name = createAnyStateStore(store, 'user.name');
+  const age = createAnyStateStore(store, 'user.age');
+  
+  function birthday() {
+    age.update(current => current + 1);
+  }
+</script>
+
+<div>
+  <h2>{$name} ({$age} years old)</h2>
+  <button on:click={birthday}>Birthday! 🎂</button>
+</div>
+```
+
+#### `createAnyStateStores(store, paths)`
+For managing multiple stores:
+
+```svelte
+<script>
+  import { createAnyStateStores } from 'anystate';
+  
+  const { name, age, email } = createAnyStateStores(store, {
+    name: 'user.name',
+    age: 'user.age', 
+    email: 'user.email'
+  });
+</script>
+
+<form>
+  <input bind:value={$name} placeholder="Name" />
+  <input bind:value={$age} type="number" placeholder="Age" />
+  <input bind:value={$email} type="email" placeholder="Email" />
+</form>
+```
+
+#### `createAnyStateDerived(store, paths, deriveFn)`
+For computed/derived values:
+
+```svelte
+<script>
+  import { createAnyStateDerived } from 'anystate';
+  
+  const fullName = createAnyStateDerived(
+    store,
+    ['user.firstName', 'user.lastName'],
+    (first, last) => `${first} ${last}`
+  );
+</script>
+
+<p>Welcome, {$fullName}!</p>
+```
+
+#### `createAnyStateReadable(store, path)`
+For read-only stores:
+
+```svelte
+<script>
+  import { createAnyStateReadable } from 'anystate';
+  
+  const status = createAnyStateReadable(store, 'app.status');
+</script>
+
+<div class="status-{$status}">
+  Status: {$status}
+</div>
+```
+
+### Persistence
+
+anyState provides flexible persistence plugins to save and restore state:
+
+#### Basic LocalStorage Persistence
+```js
+import { createStore, addPersistence, localStoragePlugin } from 'anystate';
+
+const store = createStore({ 
+  user: { name: 'John', preferences: { theme: 'dark' } },
+  todos: []
+});
+
+// Add persistence
+const persistence = await addPersistence(store, {
+  plugins: [localStoragePlugin('my-app-state')],
+  autoSave: true,
+  throttle: 1000
+});
+
+// Load existing state
+await persistence.load();
+
+// State changes are automatically saved to localStorage
+store.setItem('user.name', 'Jane'); // Saved after 1 second
+```
+
+#### Multiple Storage Backends
+```js
+// Use multiple storage plugins with fallback
+const persistence = await addPersistence(store, {
+  plugins: [
+    indexedDBPlugin('myapp', 'state', 'appstate'),
+    localStoragePlugin('my-app-backup'),
+    sessionStoragePlugin('my-app-session')
+  ]
+});
+```
+
+#### Selective Persistence
+```js
+// Only persist specific paths
+const persistence = await addPersistence(store, {
+  paths: ['user.preferences', 'todos'],
+  plugins: [localStoragePlugin('user-data')]
+});
+```
+
+#### Custom Storage Plugin
+```js
+// Create a custom plugin (e.g., for server storage)
+const serverPlugin = createCustomPlugin(
+  'server',
+  async () => {
+    const response = await fetch('/api/state');
+    return response.json();
+  },
+  async (state) => {
+    await fetch('/api/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    });
+  },
+  async () => {
+    await fetch('/api/state', { method: 'DELETE' });
+  }
+);
+
+const persistence = await addPersistence(store, {
+  plugins: [serverPlugin]
+});
+```
+
+#### Manual Control
+```js
+// Disable auto-save for manual control
+const persistence = await addPersistence(store, {
+  autoSave: false,
+  plugins: [localStoragePlugin()]
+});
+
+// Manual operations
+await persistence.save();  // Save current state
+await persistence.load();  // Load saved state
+await persistence.clear(); // Clear saved state
+persistence.destroy();     // Clean up watchers
 ```
 
 ## Examples

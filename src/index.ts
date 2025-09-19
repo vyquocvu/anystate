@@ -251,3 +251,13 @@ export {
   createAnyStateDerived,
   createAnyStateReadable
 } from './svelte';
+
+// Export persistence plugins
+export {
+  addPersistence,
+  localStoragePlugin,
+  sessionStoragePlugin,
+  indexedDBPlugin,
+  createCustomPlugin
+} from './persistence';
+export type { PersistencePlugin, PersistenceOptions } from './persistence';

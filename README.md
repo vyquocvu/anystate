@@ -43,7 +43,7 @@ pnpm add anystate
 - [x] React hooks integration
 - [x] Vue composables
 - [x] Svelte stores compatibility
-- [ ] Persistence plugins
+- [x] Persistence plugins
 
 
 ## Usage
@@ -291,6 +291,35 @@ Creates a Svelte readable store from an anyState path.
 - `path` (string): Dot notation path to watch
 
 **Returns:** Svelte readable store
+
+### Persistence Plugins
+
+#### `addPersistence(store, options)`
+Adds persistence capabilities to an anyState store.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `options` (Object): Persistence configuration
+  - `plugins` (Array): Array of persistence plugins (default: [localStoragePlugin()])
+  - `paths` (Array): Specific paths to persist (default: [] - all state)
+  - `throttle` (number): Save throttle in milliseconds (default: 1000)
+  - `autoSave` (boolean): Enable automatic saving on changes (default: true)
+
+**Returns:** Object with `save()`, `load()`, `clear()`, and `destroy()` methods
+
+#### Built-in Plugins
+
+##### `localStoragePlugin(key)`
+Persists state to browser localStorage.
+
+##### `sessionStoragePlugin(key)`
+Persists state to browser sessionStorage.
+
+##### `indexedDBPlugin(dbName, storeName, key)`
+Persists state to browser IndexedDB.
+
+##### `createCustomPlugin(name, load, save, clear)`
+Creates a custom persistence plugin.
 
 ## Framework Integration Examples
 
@@ -595,6 +624,95 @@ For read-only stores:
 <div class="status-{$status}">
   Status: {$status}
 </div>
+```
+
+### Persistence
+
+anyState provides flexible persistence plugins to save and restore state:
+
+#### Basic LocalStorage Persistence
+```js
+import { createStore, addPersistence, localStoragePlugin } from 'anystate';
+
+const store = createStore({ 
+  user: { name: 'John', preferences: { theme: 'dark' } },
+  todos: []
+});
+
+// Add persistence
+const persistence = await addPersistence(store, {
+  plugins: [localStoragePlugin('my-app-state')],
+  autoSave: true,
+  throttle: 1000
+});
+
+// Load existing state
+await persistence.load();
+
+// State changes are automatically saved to localStorage
+store.setItem('user.name', 'Jane'); // Saved after 1 second
+```
+
+#### Multiple Storage Backends
+```js
+// Use multiple storage plugins with fallback
+const persistence = await addPersistence(store, {
+  plugins: [
+    indexedDBPlugin('myapp', 'state', 'appstate'),
+    localStoragePlugin('my-app-backup'),
+    sessionStoragePlugin('my-app-session')
+  ]
+});
+```
+
+#### Selective Persistence
+```js
+// Only persist specific paths
+const persistence = await addPersistence(store, {
+  paths: ['user.preferences', 'todos'],
+  plugins: [localStoragePlugin('user-data')]
+});
+```
+
+#### Custom Storage Plugin
+```js
+// Create a custom plugin (e.g., for server storage)
+const serverPlugin = createCustomPlugin(
+  'server',
+  async () => {
+    const response = await fetch('/api/state');
+    return response.json();
+  },
+  async (state) => {
+    await fetch('/api/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    });
+  },
+  async () => {
+    await fetch('/api/state', { method: 'DELETE' });
+  }
+);
+
+const persistence = await addPersistence(store, {
+  plugins: [serverPlugin]
+});
+```
+
+#### Manual Control
+```js
+// Disable auto-save for manual control
+const persistence = await addPersistence(store, {
+  autoSave: false,
+  plugins: [localStoragePlugin()]
+});
+
+// Manual operations
+await persistence.save();  // Save current state
+await persistence.load();  // Load saved state
+await persistence.clear(); // Clear saved state
+persistence.destroy();     // Clean up watchers
 ```
 
 ## Examples

@@ -236,3 +236,10 @@ export const createStore = (initialState) => {
 
 // Export React hooks integration
 export { useAnyState, useAnyStateMultiple } from './react';
+
+// Export Vue composables integration
+export { 
+  useAnyState as useAnyStateVue, 
+  useAnyStateMultiple as useAnyStateMultipleVue,
+  useAnyStateComputed 
+} from './vue';

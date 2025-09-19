@@ -41,7 +41,7 @@ pnpm add anystate
 - [x] Vue-like multiple property watching
 - [x] TypeScript support
 - [x] React hooks integration
-- [ ] Vue composables
+- [x] Vue composables
 - [ ] Svelte stores compatibility
 - [ ] Persistence plugins
 
@@ -223,6 +223,36 @@ React hook for subscribing to multiple store values.
 
 **Returns:** Object with values and setter functions
 
+### Vue Composables
+
+#### `useAnyStateVue(store, path)` 
+Vue composable for subscribing to store values.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `path` (string): Dot notation path to watch
+
+**Returns:** `[ref, setValue]` tuple with reactive ref and setter function
+
+#### `useAnyStateMultipleVue(store, paths)`
+Vue composable for subscribing to multiple store values.
+
+**Parameters:**
+- `store` (Store): anyState store instance  
+- `paths` (Object): Object mapping property names to paths
+
+**Returns:** Reactive object with values and setter functions
+
+#### `useAnyStateComputed(store, paths, computeFn)`
+Vue composable for creating computed properties from store values.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `paths` (Array): Array of paths to watch
+- `computeFn` (Function): Function to compute derived value
+
+**Returns:** Computed ref
+
 ## Framework Integration Examples
 
 ### React Hooks Integration
@@ -327,7 +357,71 @@ function UserProfile() {
 }
 ```
 
-### Vue Composition API Example
+### Vue Composables Integration
+
+anyState provides Vue 3 composables for seamless integration with Vue's reactivity system:
+
+#### `useAnyStateVue(store, path)`
+A Vue composable that creates a reactive ref for a store value.
+
+```vue
+<template>
+  <div>
+    <h2>{{ name }} ({{ age }} years old)</h2>
+    <button @click="birthday">Birthday! 🎂</button>
+  </div>
+</template>
+
+<script setup>
+import { createStore, useAnyStateVue } from 'anystate';
+
+const store = createStore({ 
+  user: { name: 'John', age: 30 }
+});
+
+const [name, setName] = useAnyStateVue(store, 'user.name');
+const [age, setAge] = useAnyStateVue(store, 'user.age');
+
+const birthday = () => setAge(age.value + 1);
+</script>
+```
+
+#### `useAnyStateMultipleVue(store, paths)`
+For managing multiple store values:
+
+```vue
+<script setup>
+import { useAnyStateMultipleVue } from 'anystate';
+
+const userData = useAnyStateMultipleVue(store, {
+  name: 'user.name',
+  age: 'user.age',
+  email: 'user.email'
+});
+
+// Access values: userData.name.value, userData.age.value
+// Set values: userData.setName('New Name'), userData.setAge(25)
+</script>
+```
+
+#### `useAnyStateComputed(store, paths, computeFn)`
+For computed values derived from store data:
+
+```vue
+<script setup>
+import { useAnyStateComputed } from 'anystate';
+
+const fullName = useAnyStateComputed(
+  store,
+  ['user.firstName', 'user.lastName'],
+  (first, last) => `${first} ${last}`
+);
+
+// fullName.value will automatically update when firstName or lastName change
+</script>
+```
+
+### Vue Composition API Example (Manual Integration)
 ```vue
 <template>
   <div>
@@ -357,6 +451,27 @@ onUnmounted(() => {
 
 const increment = () => {
   store.setItem('count', store.getItem('count') + 1);
+};
+</script>
+```
+
+### Vue Composition API Example (With Composables)
+```vue
+<template>
+  <div>
+    <p>Count: {{ count }}</p>
+    <button @click="increment">Increment</button>
+  </div>
+</template>
+
+<script setup>
+import { createStore, useAnyStateVue } from 'anystate';
+
+const store = createStore({ count: 0 });
+const [count, setCount] = useAnyStateVue(store, 'count');
+
+const increment = () => {
+  setCount(count.value + 1);
 };
 </script>
 ```

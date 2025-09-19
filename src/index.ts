@@ -1,4 +1,4 @@
-import type { Key, TPath } from './type';
+import type { Key, TPath, WatchCallback, WatchObject } from './type';
 
 const getIn = (state, keys: Key[]) => {
   let cursor = state;
@@ -177,23 +177,47 @@ const AnyState = function(initialized) {
   }
 
   /**
-   *
-   * @param key {string}
-   * @param callback {(state, prevState) => void}
+   * Watch for changes on state properties
+   * @param key {string | WatchObject} - Either a path string or an object with path-callback pairs
+   * @param callback {WatchCallback} - Optional callback when key is string
    */
-  const watch = (key, callback) => {
+  const watch = (key: string | WatchObject, callback?: WatchCallback) => {
     if (!state) {
       throw new Error('State is not initialized');
     }
-    if (typeof callback !== 'function') {
-      throw new Error('callback must be a function');
+
+    // Handle object-based watching (Vue-like)
+    if (typeof key === 'object' && key !== null && !Array.isArray(key)) {
+      Object.keys(key).forEach(path => {
+        const pathCallback = key[path];
+        if (typeof pathCallback !== 'function') {
+          throw new Error(`callback for path '${path}' must be a function`);
+        }
+        const paths = getPaths(path);
+        if (getIn(state, paths) === undefined) {
+          console.warn(`Trying to watch item ${path} but it doesn't exist`);
+        }
+        const id = getIdPath(paths);
+        watchers.push({ key: id, callback: pathCallback, paths });
+      });
+      return;
     }
-    const paths = getPaths(key);
-    if (getIn(state, paths) === undefined) {
-      console.warn(`Trying to watch item ${key} but it doesn't exist`);
+
+    // Handle string-based watching (existing API)
+    if (typeof key === 'string') {
+      if (typeof callback !== 'function') {
+        throw new Error('callback must be a function');
+      }
+      const paths = getPaths(key);
+      if (getIn(state, paths) === undefined) {
+        console.warn(`Trying to watch item ${key} but it doesn't exist`);
+      }
+      const id = getIdPath(paths);
+      watchers.push({ key: id, callback, paths });
+      return;
     }
-    const id = getIdPath(paths);
-    watchers.push({ key: id, callback, paths });
+
+    throw new Error('watch: first argument must be a string path or an object with path-callback pairs');
   }
 
   return {

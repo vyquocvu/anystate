@@ -73,6 +73,21 @@ Set state
        // do anything
     });
   ```
+
+  Vue-like Watch (multiple properties)
+  ```js
+    anyState.watch({
+      name: (newValue, oldValue) => {
+        console.log(`Name changed from ${oldValue} to ${newValue}`);
+      },
+      age: (newValue, oldValue) => {
+        console.log(`Age changed from ${oldValue} to ${newValue}`);
+      },
+      'children[0].name': (newValue, oldValue) => {
+        console.log(`Child name changed from ${oldValue} to ${newValue}`);
+      }
+    });
+  ```
 ## Development
 
   install dependencies:

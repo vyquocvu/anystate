@@ -233,3 +233,6 @@ export const createStore = (initialState) => {
   const anyState = AnyState(clonedValues(initialState));
   return anyState;
 }
+
+// Export React hooks integration
+export { useAnyState, useAnyStateMultiple } from './react';

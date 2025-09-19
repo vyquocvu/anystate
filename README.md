@@ -40,7 +40,7 @@ pnpm add anystate
 - [x] Watch onChange functionality
 - [x] Vue-like multiple property watching
 - [x] TypeScript support
-- [ ] React hooks integration
+- [x] React hooks integration
 - [ ] Vue composables
 - [ ] Svelte stores compatibility
 - [ ] Persistence plugins
@@ -203,29 +203,96 @@ Watches for changes at specified paths.
 - `pathOrObject` (string | Object): Path string or object with path-callback pairs
 - `callback` (Function): Callback function for string paths `(newValue, oldValue) => void`
 
+### React Hooks
+
+#### `useAnyState(store, path)`
+React hook for subscribing to store values.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `path` (string): Dot notation path to watch
+
+**Returns:** `[value, setValue]` tuple similar to React's `useState`
+
+#### `useAnyStateMultiple(store, paths)`
+React hook for subscribing to multiple store values.
+
+**Parameters:**
+- `store` (Store): anyState store instance  
+- `paths` (Object): Object mapping property names to paths
+
+**Returns:** Object with values and setter functions
+
 ## Framework Integration Examples
+
+### React Hooks Integration
+
+anyState now provides built-in React hooks for seamless integration:
+
+#### `useAnyState(store, path)`
+A React hook that subscribes to a specific path in the store and returns a stateful value and a setter function.
+
+```jsx
+import { createStore, useAnyState } from 'anystate';
+
+const store = createStore({ 
+  user: { name: 'John', age: 30 },
+  todos: []
+});
+
+function UserComponent() {
+  const [name, setName] = useAnyState(store, 'user.name');
+  const [age, setAge] = useAnyState(store, 'user.age');
+  
+  return (
+    <div>
+      <h2>{name} ({age} years old)</h2>
+      <button onClick={() => setAge(age + 1)}>
+        Birthday! 🎂
+      </button>
+    </div>
+  );
+}
+```
+
+#### `useAnyStateMultiple(store, paths)`
+For watching multiple values at once:
+
+```jsx
+function UserForm() {
+  const userData = useAnyStateMultiple(store, {
+    name: 'user.name',
+    age: 'user.age',
+    email: 'user.email'
+  });
+  
+  return (
+    <form>
+      <input 
+        value={userData.name} 
+        onChange={(e) => userData.setName(e.target.value)} 
+      />
+      <input 
+        value={userData.age} 
+        onChange={(e) => userData.setAge(e.target.value)} 
+      />
+      <input 
+        value={userData.email} 
+        onChange={(e) => userData.setEmail(e.target.value)} 
+      />
+    </form>
+  );
+}
+```
 
 ### React Hook Example
 ```jsx
-import { createStore } from 'anystate';
-import { useState, useEffect } from 'react';
+import { createStore, useAnyState } from 'anystate';
 
 const store = createStore({ count: 0 });
 
-function useAnyState(path) {
-  const [value, setValue] = useState(() => store.getItem(path));
-  
-  useEffect(() => {
-    return store.watch(path, (newValue) => setValue(newValue));
-  }, [path]);
-  
-  const updateValue = (newValue) => store.setItem(path, newValue);
-  
-  return [value, updateValue];
-}
-
 function Counter() {
-  const [count, setCount] = useAnyState('count');
+  const [count, setCount] = useAnyState(store, 'count');
   
   return (
     <div>
@@ -233,6 +300,28 @@ function Counter() {
       <button onClick={() => setCount(count + 1)}>
         Increment
       </button>
+    </div>
+  );
+}
+
+// You can also use the hook with nested paths
+function UserProfile() {
+  const [name, setName] = useAnyState(store, 'user.name');
+  const [age, setAge] = useAnyState(store, 'user.age');
+  
+  return (
+    <div>
+      <input 
+        value={name} 
+        onChange={(e) => setName(e.target.value)} 
+        placeholder="Name" 
+      />
+      <input 
+        type="number" 
+        value={age} 
+        onChange={(e) => setAge(parseInt(e.target.value))} 
+        placeholder="Age" 
+      />
     </div>
   );
 }

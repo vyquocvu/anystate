@@ -1,5 +1,5 @@
 var assert = require('assert');
-var { createStore } = require('../src/index.js');
+var { createStore } = require('../dist/index.js');
 
 describe('GetItem', function () {
   describe('Initial state', function () {

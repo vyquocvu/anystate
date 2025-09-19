@@ -1,5 +1,5 @@
 var assert = require('assert');
-var { createStore } = require('../src/index.js');
+var { createStore } = require('../dist/index.js');
 
 describe('Vue-like Watch', function () {
   describe('Object-based watching', function () {

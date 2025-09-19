@@ -1,6 +1,6 @@
 var assert = require('assert');
 // const { describe } = require('node:test');
-var { createStore } = require('../src/index.js');
+var { createStore } = require('../dist/index.js');
 
 describe('Test State array', function () {
   const state = createStore({

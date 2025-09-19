@@ -243,3 +243,11 @@ export {
   useAnyStateMultiple as useAnyStateMultipleVue,
   useAnyStateComputed 
 } from './vue';
+
+// Export Svelte stores integration
+export {
+  createAnyStateStore,
+  createAnyStateStores,
+  createAnyStateDerived,
+  createAnyStateReadable
+} from './svelte';

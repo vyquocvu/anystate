@@ -42,7 +42,7 @@ pnpm add anystate
 - [x] TypeScript support
 - [x] React hooks integration
 - [x] Vue composables
-- [ ] Svelte stores compatibility
+- [x] Svelte stores compatibility
 - [ ] Persistence plugins
 
 
@@ -252,6 +252,45 @@ Vue composable for creating computed properties from store values.
 - `computeFn` (Function): Function to compute derived value
 
 **Returns:** Computed ref
+
+### Svelte Stores
+
+#### `createAnyStateStore(store, path)`
+Creates a Svelte writable store from an anyState path.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `path` (string): Dot notation path to watch
+
+**Returns:** Svelte writable store with `subscribe`, `set`, `update`, and `destroy` methods
+
+#### `createAnyStateStores(store, paths)`
+Creates multiple Svelte stores from anyState paths.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `paths` (Object): Object mapping store names to paths
+
+**Returns:** Object with Svelte writable stores
+
+#### `createAnyStateDerived(store, paths, deriveFn)`
+Creates a Svelte derived store from multiple anyState paths.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `paths` (Array): Array of paths to watch
+- `deriveFn` (Function): Function to derive the value
+
+**Returns:** Svelte derived store
+
+#### `createAnyStateReadable(store, path)`
+Creates a Svelte readable store from an anyState path.
+
+**Parameters:**
+- `store` (Store): anyState store instance
+- `path` (string): Dot notation path to watch
+
+**Returns:** Svelte readable store
 
 ## Framework Integration Examples
 
@@ -474,6 +513,88 @@ const increment = () => {
   setCount(count.value + 1);
 };
 </script>
+```
+
+### Svelte Stores Integration
+
+anyState provides seamless integration with Svelte's store system:
+
+#### `createAnyStateStore(store, path)`
+Creates a Svelte writable store that stays in sync with anyState.
+
+```svelte
+<script>
+  import { createStore, createAnyStateStore } from 'anystate';
+  
+  const store = createStore({ 
+    user: { name: 'John', age: 30 }
+  });
+  
+  const name = createAnyStateStore(store, 'user.name');
+  const age = createAnyStateStore(store, 'user.age');
+  
+  function birthday() {
+    age.update(current => current + 1);
+  }
+</script>
+
+<div>
+  <h2>{$name} ({$age} years old)</h2>
+  <button on:click={birthday}>Birthday! 🎂</button>
+</div>
+```
+
+#### `createAnyStateStores(store, paths)`
+For managing multiple stores:
+
+```svelte
+<script>
+  import { createAnyStateStores } from 'anystate';
+  
+  const { name, age, email } = createAnyStateStores(store, {
+    name: 'user.name',
+    age: 'user.age', 
+    email: 'user.email'
+  });
+</script>
+
+<form>
+  <input bind:value={$name} placeholder="Name" />
+  <input bind:value={$age} type="number" placeholder="Age" />
+  <input bind:value={$email} type="email" placeholder="Email" />
+</form>
+```
+
+#### `createAnyStateDerived(store, paths, deriveFn)`
+For computed/derived values:
+
+```svelte
+<script>
+  import { createAnyStateDerived } from 'anystate';
+  
+  const fullName = createAnyStateDerived(
+    store,
+    ['user.firstName', 'user.lastName'],
+    (first, last) => `${first} ${last}`
+  );
+</script>
+
+<p>Welcome, {$fullName}!</p>
+```
+
+#### `createAnyStateReadable(store, path)`
+For read-only stores:
+
+```svelte
+<script>
+  import { createAnyStateReadable } from 'anystate';
+  
+  const status = createAnyStateReadable(store, 'app.status');
+</script>
+
+<div class="status-{$status}">
+  Status: {$status}
+</div>
 ```
 
 ## Examples

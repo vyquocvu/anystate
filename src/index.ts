@@ -1,140 +1,119 @@
 import type { Key, TPath, WatchCallback, WatchObject } from './type';
 
-const getIn = (state, keys: Key[]) => {
-  let cursor = state;
-  keys.forEach((key) => {
-    if (cursor === undefined) return;
-    cursor = cursor[key];
-  })
-  return cursor;
-}
+const isObject = (value: any): value is object => {
+  return value !== null && typeof value === 'object';
+};
 
-const clonedValues = (value) => {
-  if (typeof value === 'object') {
+const getIn = <T extends object>(state: T, keys: Key[]): any => {
+  let cursor: any = state;
+  for (const key of keys) {
+    if (cursor === undefined || cursor === null) {
+      return undefined;
+    }
+    cursor = cursor[key];
+  }
+  return cursor;
+};
+
+const clonedValues = <T>(value: T): T => {
+  if (isObject(value)) {
     return JSON.parse(JSON.stringify(value));
   }
   return value;
-}
+};
 
-const setIn = (state, paths: Key[], value) => {
-  let cursor = state;
-  let cloneValue =  value;
-  if (typeof value === 'object') {
-    cloneValue = clonedValues(value);
+const setIn = <T extends object>(state: T, paths: Key[], value: any): T => {
+  let cursor: any = state;
+  const lastPath = paths.pop();
+
+  if (lastPath === undefined) {
+    return state;
   }
-  paths.forEach((path, index) => {
-    if (cursor === undefined) {
-      return;
+
+  for (const path of paths) {
+    cursor = cursor[path];
+    if (!isObject(cursor)) {
+      return state;
     }
-    if (index === paths.length - 1) {
-      cursor[path] = cloneValue;
-    } else {
-      cursor = cursor[path];
-    }
-  })
+  }
+
+  if (isObject(cursor)) {
+    (cursor as any)[lastPath] = value;
+  }
+
   return state;
-}
+};
 
-/**
- * @param {string} path
- * @returns {Key[]}
- */
 const getPaths = (path: string): Key[] => {
-  return path.split(/\[|\]|\./g)
-    .reduce((acc, curr) => {
-      if (curr === '' || curr === null || curr === undefined) {
-        return acc;
-      }
+  return path.split(/\[|\]|\./g).reduce((acc: Key[], curr) => {
+    if (curr === '' || curr === null || curr === undefined) {
+      return acc;
+    }
+    if (/^\d+$/.test(curr)) {
+      acc.push(parseInt(curr, 10));
+    } else {
+      acc.push(curr);
+    }
+    return acc;
+  }, []);
+};
 
-      if (/^\d+$/.test(curr)) {
-        acc.push(parseInt(curr, 10));
-      } else {
-        acc.push(curr);
-      }
-      return acc
-    } , []);
-}
-
-/**
- * @param {Key[]} paths
- * @returns {string}
-*/
 const getIdPath = (paths: Key[]): string => {
   return paths.join('/');
-}
+};
 
-const AnyState = function(initialized) {
-  const watchers: {
+const AnyState = function <T extends object>(initialized: T) {
+  type Watcher<V = any> = {
     key: string;
     paths: Key[];
-    callback: (state, prevState) => void;
-  }[] = [];
-  const proxiesStack = [];
+    callback: WatchCallback<V>;
+  };
 
-  var validator = (route = []) => ({
-    get(target, key) {
-      const childRoute = route.concat([key]);
-      // children are object validated
-      // proxy are not existed
+  const watchers: Watcher[] = [];
 
-      if (
-        target[key] !== null &&
-        typeof target[key] === 'object' &&
-        !proxiesStack.includes(childRoute)
-      ) {
-        return new Proxy(target[key], validator(childRoute));
+  const validator = (route: Key[] = []) => ({
+    get(target: object, key: string | symbol): any {
+      const childRoute = [...route, key as Key];
+
+      const targetValue = Reflect.get(target, key);
+
+      if (isObject(targetValue)) {
+        return new Proxy(targetValue, validator(childRoute));
       }
-      return target[key];
+      return targetValue;
     },
-    set (target, key, value) {
-      const childRoute = route.concat([key]);
-      let shallowState = clonedValues(state);
+    set(target: object, key: string | symbol, value: any): boolean {
+      const shallowState = clonedValues(state);
+      Reflect.set(target, key, value);
+      const childRoute = [...route, key as Key];
       const idPath = getIdPath(childRoute);
-      target[key] = value;
+
       watchers.forEach((watcher) => {
-        // if the watcher is watching the same path as the item being set
-        // children of the path will also be updated
-        if (watcher && watcher.key.indexOf(idPath) === 0) {
-          const prevValue = getIn(shallowState, watcher.paths);
-          const nextValue = getIn(state, watcher.paths);
-          if (typeof prevValue !== typeof nextValue) {
-            console.warn(`Type mismatch for ${key}`);
-          }
+        if (watcher && watcher.key.startsWith(idPath)) {
+          const prevValue = getIn(shallowState as T, watcher.paths);
+          const nextValue = getIn(state as T, watcher.paths);
           watcher.callback(nextValue, prevValue);
         }
       });
+
       return true;
     },
   });
 
-  let state: { [key: string]: any } | null = new Proxy(initialized, validator());
+  let state: T | null = new Proxy(initialized, validator()) as T;
 
-  /**
-   *
-   * @returns {any}
-   */
-  const getState = () => {
+  const getState = (): T | null => {
     return clonedValues(state);
-  }
+  };
 
-  /**
-   *
-   * @param newState: { [key: string]: any }
-   * @returns {void}
-   */
-  const setState = (newState) => {
-    state = new Proxy(newState, validator());
-  }
+  const setState = (newState: T) => {
+    state = new Proxy(newState, validator()) as T;
+  };
 
-  /**
-   *
-   * @param key {string}
-   * @param value
-   */
   const setItem = (key: TPath, value: any) => {
     let paths: Key[] = [];
-    if (!Array.isArray(key) && typeof key !== 'string' && typeof key !== 'number') {
-      throw new Error('setItem: key must be a string or an array of strings');
+    if (typeof key !== 'string' && typeof key !== 'number' && !Array.isArray(key)) {
+      throw new Error('setItem: key must be a string, number, or an array of keys');
     }
 
     if (!state) {
@@ -145,56 +124,47 @@ const AnyState = function(initialized) {
       paths = getPaths(key);
     } else if (typeof key === 'number') {
       paths = [key];
-    } else if (Array.isArray(key)) {
+    } else {
       paths = key;
     }
 
     if (getIn(state, paths) === undefined) {
-      console.warn(`Trying to set item ${key} but it doesn't exist`);
+      console.warn(`Trying to set item ${key.toString()} but it doesn't exist`);
     }
 
     state = setIn(state, paths, value);
-  }
+  };
 
-  /**
-   *
-   * @param path {string}
-   * @returns {any}
-   */
-  const getItem = (path: Key[] | string) => {
-    let paths = path as Key[];
-    let item = undefined;
-
-    if (!Array.isArray(path) && typeof path !== 'string' && typeof path !== 'number') {
-      throw new Error('setItem: key must be a string or an array of strings');
-    }
+  const getItem = <V = any>(path: TPath): V | undefined => {
+    let paths: Key[];
     if (typeof path === 'string') {
       paths = getPaths(path);
+    } else if (typeof path === 'number') {
+      paths = [path];
+    } else if (Array.isArray(path)) {
+      paths = path;
+    } else {
+      throw new Error('getItem: path must be a string, number, or an array of keys');
     }
 
-    item = getIn(state, paths);
-    return clonedValues(item);
-  }
+    if (!state) return undefined;
 
-  /**
-   * Watch for changes on state properties
-   * @param key {string | WatchObject} - Either a path string or an object with path-callback pairs
-   * @param callback {WatchCallback} - Optional callback when key is string
-   */
-  const watch = (key: string | WatchObject, callback?: WatchCallback) => {
+    const item = getIn(state, paths);
+    return clonedValues(item);
+  };
+
+  const watch = <V = any>(key: string | WatchObject<V>, callback?: WatchCallback<V>) => {
     if (!state) {
       throw new Error('State is not initialized');
     }
 
-    // Handle object-based watching (Vue-like)
-    if (typeof key === 'object' && key !== null && !Array.isArray(key)) {
-      Object.keys(key).forEach(path => {
-        const pathCallback = key[path];
+    if (isObject(key) && !Array.isArray(key)) {
+      Object.entries(key).forEach(([path, pathCallback]) => {
         if (typeof pathCallback !== 'function') {
           throw new Error(`callback for path '${path}' must be a function`);
         }
         const paths = getPaths(path);
-        if (getIn(state, paths) === undefined) {
+        if (getIn(state as T, paths) === undefined) {
           console.warn(`Trying to watch item ${path} but it doesn't exist`);
         }
         const id = getIdPath(paths);
@@ -203,7 +173,6 @@ const AnyState = function(initialized) {
       return;
     }
 
-    // Handle string-based watching (existing API)
     if (typeof key === 'string') {
       if (typeof callback !== 'function') {
         throw new Error('callback must be a function');
@@ -218,7 +187,7 @@ const AnyState = function(initialized) {
     }
 
     throw new Error('watch: first argument must be a string path or an object with path-callback pairs');
-  }
+  };
 
   return {
     setState,
@@ -226,13 +195,13 @@ const AnyState = function(initialized) {
     getState,
     getItem,
     watch,
-  }
+  };
 };
 
-export const createStore = (initialState) => {
+export const createStore = <T extends object>(initialState: T) => {
   const anyState = AnyState(clonedValues(initialState));
   return anyState;
-}
+};
 
 // Export React hooks integration
 export { useAnyState, useAnyStateMultiple } from './react';

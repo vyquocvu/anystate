@@ -24,7 +24,7 @@ describe('GetItem', function () {
 });
 
 describe('Watch', function () {
-  it('should return Object', function () {
+  it('should call watch callback with correct values', function () {
     const state = createStore({
       x: {
         y: 0,
@@ -33,60 +33,60 @@ describe('Watch', function () {
         }
       },
     });
+
+    let yValue, prevYValue, zValue, prevZValue;
+
     state.watch('x.y', (y, prevY) => {
-      console.log('y changed', prevY, 'to ', y);
+      yValue = y;
+      prevYValue = prevY;
     });
     state.watch('x.d.z', (z, prevZ) => {
-      console.log('z changed', prevZ, 'to ', z);
+      zValue = z;
+      prevZValue = prevZ;
     });
+
     state.setItem('x.y', 1);
     state.setItem('x.d.z', 2);
-    assert.deepEqual(state.getState(), {
-      x: {
-        y: 1,
-        d: {
-          z: 2,
-        }
-      },
-    });
+
+    assert.strictEqual(prevYValue, 0, 'prevY should be 0');
+    assert.strictEqual(yValue, 1, 'y should be 1');
+    assert.strictEqual(prevZValue, 0, 'prevZ should be 0');
+    assert.strictEqual(zValue, 2, 'z should be 2');
   });
 });
 
 describe('Watch array', function () {
-  it('should return 0', function () {
+  it('should watch array element changes', function () {
     const state = createStore({
       x: 0,
       k: [
-        { y:
-          {
-            z: 0,
-          }
-        },
+        { y: { z: 0 } },
         { y: 1 },
         { y: 2 }
       ]
     });
+
+    let yValue, prevYValue, zValue, prevZValue;
 
     // watch for changes k
     state.watch('k[0].y', (y, prevy) => {
-      console.log('y changed', prevy, 'to ', y);
+      yValue = y;
+      prevYValue = prevy;
     });
 
     // watch for changes child of k[0]
-    state.watch('k[0].y.z', (z, prevy) => {
-      console.log('z changed', prevy, 'to ', z);
+    state.watch('k[0].y.z', (z, prevz) => {
+      zValue = z;
+      prevZValue = prevz;
     });
 
     state.setItem('k[0].y', 1000);
-    assert.deepEqual(state.getState(), {
-      x: 0,
-      k: [
-        { y:1000 },
-        { y: 1 },
-        { y: 2 }
-      ]
-    });
-  })
+
+    assert.deepStrictEqual(prevYValue, { z: 0 }, 'prevy should be { z: 0 }');
+    assert.strictEqual(yValue, 1000, 'y should be 1000');
+    assert.strictEqual(prevZValue, 0, 'prevz should be 0');
+    assert.strictEqual(zValue, undefined, 'z should be undefined after parent is replaced');
+  });
 });
 
 describe('Reset', function () {

@@ -115,5 +115,53 @@ describe('Persistence Plugins', function () {
       
       persistence.destroy();
     });
+
+    it('should only save specified paths', async function () {
+      const store = createStore({ count: 0, user: { name: 'John' }, other: 'test' });
+      let memoryStorage = null;
+
+      const memoryPlugin = createCustomPlugin(
+        'memory',
+        () => memoryStorage,
+        (state) => { memoryStorage = state; }
+      );
+
+      const persistence = await addPersistence(store, {
+        plugins: [memoryPlugin],
+        paths: ['count', 'user.name'],
+        autoSave: false
+      });
+
+      store.setItem('count', 10);
+      store.setItem('user.name', 'Jane');
+      store.setItem('other', 'new value');
+      await persistence.save();
+
+      assert.deepEqual(memoryStorage, { count: 10, user: { name: 'Jane' } });
+    });
+
+    it('should auto-save on change', async function () {
+      const store = createStore({ count: 0 });
+      let memoryStorage = null;
+
+      const memoryPlugin = createCustomPlugin(
+        'memory',
+        () => memoryStorage,
+        (state) => { memoryStorage = state; }
+      );
+
+      const persistence = await addPersistence(store, {
+        plugins: [memoryPlugin],
+        throttle: 0
+      });
+
+      store.setItem('count', 1);
+
+      // wait for throttle
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      assert.deepEqual(memoryStorage, { count: 1 });
+      persistence.destroy();
+    });
   });
 });

@@ -168,13 +168,13 @@ const AnyState = function <T extends object>(initialized: T) {
     return clonedValues(item);
   };
 
-  const watch = <V = any>(key: string | WatchObject<V>, callback?: WatchCallback<V>) => {
+  const watch = <V = any>(key: string | WatchObject<V>, callback?: WatchCallback<V>): (() => void) | void => {
     if (!state) {
       throw new Error('State is not initialized');
     }
 
     if (isObject(key) && !Array.isArray(key)) {
-      Object.entries(key).forEach(([path, pathCallback]) => {
+      const unwatchers = Object.entries(key).map(([path, pathCallback]) => {
         if (typeof pathCallback !== 'function') {
           throw new Error(`callback for path '${path}' must be a function`);
         }
@@ -183,9 +183,16 @@ const AnyState = function <T extends object>(initialized: T) {
           console.warn(`Trying to watch item ${path} but it doesn't exist`);
         }
         const id = getIdPath(paths);
-        watchers.push({ key: id, callback: pathCallback, paths });
+        const watcher = { key: id, callback: pathCallback, paths };
+        watchers.push(watcher);
+        return () => {
+          const index = watchers.indexOf(watcher);
+          if (index > -1) {
+            watchers.splice(index, 1);
+          }
+        };
       });
-      return;
+      return () => unwatchers.forEach(unwatch => unwatch());
     }
 
     if (typeof key === 'string') {
@@ -197,8 +204,14 @@ const AnyState = function <T extends object>(initialized: T) {
         console.warn(`Trying to watch item ${key} but it doesn't exist`);
       }
       const id = getIdPath(paths);
-      watchers.push({ key: id, callback, paths });
-      return;
+      const watcher = { key: id, callback, paths };
+      watchers.push(watcher);
+      return () => {
+        const index = watchers.indexOf(watcher);
+        if (index > -1) {
+          watchers.splice(index, 1);
+        }
+      };
     }
 
     throw new Error('watch: first argument must be a string path or an object with path-callback pairs');
@@ -246,3 +259,13 @@ export {
   createCustomPlugin
 } from './persistence';
 export type { PersistencePlugin, PersistenceOptions } from './persistence';
+
+// Export helper functions for testing
+export {
+  isObject,
+  getIn,
+  clonedValues,
+  setIn,
+  getPaths,
+  getIdPath,
+};

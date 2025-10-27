@@ -63,6 +63,7 @@ const getIdPath = (paths: Key[]): string => {
 };
 
 const AnyState = function <T extends object>(initialized: T) {
+  const pristineState = clonedValues(initialized);
   type Watcher<V = any> = {
     key: string;
     paths: Key[];
@@ -107,7 +108,21 @@ const AnyState = function <T extends object>(initialized: T) {
   };
 
   const setState = (newState: T) => {
+    const shallowState = clonedValues(state);
     state = new Proxy(newState, validator()) as T;
+    watchers.forEach((watcher) => {
+      if (watcher) {
+        const prevValue = getIn(shallowState as T, watcher.paths);
+        const nextValue = getIn(state as T, watcher.paths);
+        if (prevValue !== nextValue) {
+          watcher.callback(nextValue, prevValue);
+        }
+      }
+    });
+  };
+
+  const reset = () => {
+    setState(clonedValues(pristineState));
   };
 
   const setItem = (key: TPath, value: any) => {
@@ -195,6 +210,7 @@ const AnyState = function <T extends object>(initialized: T) {
     getState,
     getItem,
     watch,
+    reset,
   };
 };
 

@@ -3,11 +3,11 @@
   "version": "0.0.2-a",
   "author": "Vy Quốc Vũ <vyquocvu@gmail.com>",
   "description": "state management for any framework",
-  "main": "dist/bundle.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "mocha",
-    "dev": "tsc --watch src/index.ts",
-    "build": "tsc src/index.ts --outDir dist/ && uglifyjs dist/index.js  --compress --mangle -o dist/bundle.js"
+    "dev": "tsc --watch",
+    "build": "tsc && uglifyjs dist/index.js --compress --mangle -o dist/bundle.js"
   },
   "repository": {
     "type": "git",
@@ -42,6 +42,7 @@
     "react": "^18.3.1",
     "size-limit": "^8.1.0",
     "svelte": "^5.39.2",
+    "typescript": "^5.9.3",
     "uglify-js": "^3.16.3",
     "vue": "^3.5.21"
   },

@@ -1,3 +1,4 @@
+import { trackPerformance, trackMemory } from './performance';
 import type { Key, TPath, WatchCallback, WatchObject } from './type';
 
 const isObject = (value: any): value is object => {
@@ -23,14 +24,15 @@ const clonedValues = <T>(value: T): T => {
 };
 
 const setIn = <T extends object>(state: T, paths: Key[], value: any): T => {
+  const pathsCopy = [...paths];
   let cursor: any = state;
-  const lastPath = paths.pop();
+  const lastPath = pathsCopy.pop();
 
   if (lastPath === undefined) {
     return state;
   }
 
-  for (const path of paths) {
+  for (const path of pathsCopy) {
     cursor = cursor[path];
     if (!isObject(cursor)) {
       return state;
@@ -64,6 +66,7 @@ const getIdPath = (paths: Key[]): string => {
 
 const AnyState = function <T extends object>(initialized: T) {
   const pristineState = clonedValues(initialized);
+  let isBatching = false;
   type Watcher<V = any> = {
     key: string;
     paths: Key[];
@@ -86,6 +89,9 @@ const AnyState = function <T extends object>(initialized: T) {
     set(target: object, key: string | symbol, value: any): boolean {
       const shallowState = clonedValues(state);
       Reflect.set(target, key, value);
+      if (isBatching) {
+        return true;
+      }
       const childRoute = [...route, key as Key];
       const idPath = getIdPath(childRoute);
 
@@ -103,11 +109,11 @@ const AnyState = function <T extends object>(initialized: T) {
 
   let state: T | null = new Proxy(initialized, validator()) as T;
 
-  const getState = (): T | null => {
+  const getState = trackPerformance('getState', (): T | null => {
     return clonedValues(state);
-  };
+  });
 
-  const setState = (newState: T) => {
+  const setState = trackPerformance('setState', (newState: T) => {
     const shallowState = clonedValues(state);
     state = new Proxy(newState, validator()) as T;
     watchers.forEach((watcher) => {
@@ -119,13 +125,14 @@ const AnyState = function <T extends object>(initialized: T) {
         }
       }
     });
-  };
+  });
 
   const reset = () => {
+    isBatching = false;
     setState(clonedValues(pristineState));
   };
 
-  const setItem = (key: TPath, value: any) => {
+  const setItem = trackPerformance('setItem', (key: TPath, value: any) => {
     let paths: Key[] = [];
     if (typeof key !== 'string' && typeof key !== 'number' && !Array.isArray(key)) {
       throw new Error('setItem: key must be a string, number, or an array of keys');
@@ -147,10 +154,10 @@ const AnyState = function <T extends object>(initialized: T) {
       console.warn(`Trying to set item ${key.toString()} but it doesn't exist`);
     }
 
-    state = setIn(state, paths, value);
-  };
+    setIn(state, paths, value);
+  });
 
-  const getItem = <V = any>(path: TPath): V | undefined => {
+  const getItem = trackPerformance('getItem', <V = any>(path: TPath): V | undefined => {
     let paths: Key[];
     if (typeof path === 'string') {
       paths = getPaths(path);
@@ -166,6 +173,34 @@ const AnyState = function <T extends object>(initialized: T) {
 
     const item = getIn(state, paths);
     return clonedValues(item);
+  });
+
+  const logMemoryUsage = () => {
+    if (state) {
+      trackMemory(state);
+    }
+  };
+
+  const batch = (updates: () => void) => {
+    const shallowState = clonedValues(state);
+    isBatching = true;
+    updates();
+    isBatching = false;
+    watchers.forEach((watcher) => {
+      if (watcher) {
+        const prevValue = getIn(shallowState as T, watcher.paths);
+        const nextValue = getIn(state as T, watcher.paths);
+        if (prevValue !== nextValue) {
+          watcher.callback(nextValue, prevValue);
+        }
+      }
+    });
+  };
+
+  const atomic = (updates: () => void) => {
+    isBatching = true;
+    updates();
+    isBatching = false;
   };
 
   const watch = <V = any>(key: string | WatchObject<V>, callback?: WatchCallback<V>): (() => void) | void => {
@@ -224,6 +259,9 @@ const AnyState = function <T extends object>(initialized: T) {
     getItem,
     watch,
     reset,
+    logMemoryUsage,
+    batch,
+    atomic,
   };
 };
 

@@ -1,45 +1,84 @@
-var assert = require('assert');
-var { createStore, useAnyState, useAnyStateMultiple } = require('../dist/index.js');
+const assert = require('assert');
+const React = require('react');
+const { act } = require('react-dom/test-utils');
+const { createRoot } = require('react-dom/client');
+const { JSDOM } = require('jsdom');
+const { createStore, useAnyState, useAnyStateMultiple } = require('../dist/index');
 
-describe('React Hooks Integration', function () {
-  describe('useAnyState hook', function () {
-    it('should be exportable as a function', function () {
-      assert.equal(typeof useAnyState, 'function');
-    });
+// Set up a fake DOM environment
+const { window } = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>');
+global.window = window;
+global.document = window.document;
 
-    it('should be compatible with store interface', function () {
-      const store = createStore({ count: 0, user: { name: 'John' } });
-      
-      // Test the hook accepts store and path parameters
-      // Note: We can't actually run React hooks in Node.js tests without React test environment
-      // But we can test that the functions exist and have correct interfaces
-      assert.equal(typeof store.getItem, 'function');
-      assert.equal(typeof store.setItem, 'function');
-      assert.equal(typeof store.watch, 'function');
-      
-      // Test that the required store methods work as expected
-      assert.equal(store.getItem('count'), 0);
-      assert.equal(store.getItem('user.name'), 'John');
-      
-      let watchCalled = false;
-      const unwatch = store.watch('count', (newValue, oldValue) => {
-        watchCalled = true;
-        assert.equal(oldValue, 0);
-        assert.equal(newValue, 1);
-      });
-      
-      store.setItem('count', 1);
-      assert.equal(watchCalled, true);
-      
-      if (typeof unwatch === 'function') {
-        unwatch();
-      }
+describe('React Hooks', () => {
+  let store;
+  let container;
+  let root;
+
+  beforeEach(() => {
+    store = createStore({
+      user: { name: 'John', age: 30 },
+      items: ['apple', 'banana'],
     });
+    container = document.getElementById('root');
+    root = createRoot(container);
   });
-  
-  describe('useAnyStateMultiple hook', function () {
-    it('should be exportable as a function', function () {
-      assert.equal(typeof useAnyStateMultiple, 'function');
+
+  afterEach(() => {
+    act(() => {
+      root.unmount();
     });
+    container.innerHTML = '';
+  });
+
+  it('useAnyState should read and update state', () => {
+    const TestComponent = () => {
+      const [name, setName] = useAnyState(store, 'user.name');
+      return React.createElement('div', {
+        onClick: () => setName('Doe'),
+      }, name);
+    };
+
+    act(() => {
+      root.render(React.createElement(TestComponent));
+    });
+
+    assert.strictEqual(container.textContent, 'John');
+
+    act(() => {
+      container.firstChild.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    });
+
+    assert.strictEqual(container.textContent, 'Doe');
+  });
+
+  it('useAnyStateMultiple should read and update multiple state values', () => {
+    const TestComponent = () => {
+      const state = useAnyStateMultiple(store, {
+        name: 'user.name',
+        firstItem: 'items[0]',
+      });
+
+      return React.createElement('div', {
+        onClick: () => {
+          state.setName('Jane');
+          state.setFirstItem('orange');
+        },
+      }, `${state.name} ${state.firstItem}`);
+    };
+
+    act(() => {
+      root.render(React.createElement(TestComponent));
+    });
+
+    assert.strictEqual(container.textContent, 'John apple');
+
+    act(() => {
+      container.firstChild.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    });
+
+    assert.strictEqual(container.textContent, 'Jane orange');
+    assert.deepStrictEqual(store.getState().user.name, 'Jane');
+    assert.deepStrictEqual(store.getState().items[0], 'orange');
   });
 });

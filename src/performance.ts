@@ -1,3 +1,5 @@
+import { sendToDevTools } from './devtools';
+
 export const trackPerformance = <T extends (...args: any[]) => any>(
   fnName: string,
   fn: T,
@@ -6,7 +8,9 @@ export const trackPerformance = <T extends (...args: any[]) => any>(
     const start = performance.now();
     const result = fn(...args);
     const end = performance.now();
-    console.log(`${fnName} took ${end - start}ms`);
+    const duration = end - start;
+    console.log(`${fnName} took ${duration}ms`);
+    sendToDevTools(`@performance/${fnName}`, { duration });
     return result;
   };
 };

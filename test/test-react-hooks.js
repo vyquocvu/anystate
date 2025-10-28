@@ -5,17 +5,16 @@ const { createRoot } = require('react-dom/client');
 const { JSDOM } = require('jsdom');
 const { createStore, useAnyState, useAnyStateMultiple } = require('../dist/index');
 
-// Set up a fake DOM environment
-const { window } = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>');
-global.window = window;
-global.document = window.document;
-
 describe('React Hooks', () => {
   let store;
   let container;
   let root;
+  let dom;
 
   beforeEach(() => {
+    dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>');
+    global.window = dom.window;
+    global.document = dom.window.document;
     store = createStore({
       user: { name: 'John', age: 30 },
       items: ['apple', 'banana'],

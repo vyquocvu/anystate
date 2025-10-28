@@ -265,8 +265,8 @@ const AnyState = function <T extends object>(initialized: T) {
   };
 };
 
-export const createStore = <T extends object>(initialState: T) => {
-  const anyState = AnyState(clonedValues(initialState));
+export const createStore = <T extends object>(initialState?: T) => {
+  const anyState = AnyState(clonedValues(initialState || {} as T));
   return anyState;
 };
 

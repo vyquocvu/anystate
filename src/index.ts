@@ -1,5 +1,6 @@
 import { trackPerformance, trackMemory } from './performance';
-import type { Key, TPath, WatchCallback, WatchObject, WatchOptions } from './type';
+import type { Key, TPath, WatchCallback, WatchObject } from './type';
+import { connectDevTools, sendToDevTools } from './devtools';
 
 const isObject = (value: any): value is object => {
   return value !== null && typeof value === 'object';
@@ -125,6 +126,7 @@ const AnyState = function <T extends object>(initialized: T) {
         }
       }
     });
+    sendToDevTools('setState', state);
   });
 
   const reset = () => {
@@ -155,6 +157,7 @@ const AnyState = function <T extends object>(initialized: T) {
     }
 
     setIn(state, paths, value);
+    sendToDevTools(`setItem: ${key.toString()}`, state);
   });
 
   const getItem = trackPerformance('getItem', <V = any>(path: TPath): V | undefined => {
@@ -203,53 +206,50 @@ const AnyState = function <T extends object>(initialized: T) {
     isBatching = false;
   };
 
-  const watch = <V = any>(
-    key: string | WatchObject<V>,
-    callback?: WatchCallback<V> | WatchOptions,
-    options?: WatchOptions,
-  ): (() => void) | void => {
+  const watch = <V = any>(key: string | WatchObject<V>, callback?: WatchCallback<V>): (() => void) | void => {
     if (!state) {
       throw new Error('State is not initialized');
     }
 
-    const processWatcher = (path: string, cb: WatchCallback<V>, opts: WatchOptions = {}) => {
-      const paths = getPaths(path);
-      if (getIn(state as T, paths) === undefined) {
-        console.warn(`Trying to watch item ${path} but it doesn't exist`);
-      }
-      const id = getIdPath(paths);
-      const watcher = { key: id, callback: cb, paths };
-      watchers.push(watcher);
-
-      if (opts.set) {
-        const currentValue = getIn(state as T, paths);
-        cb(currentValue, undefined as any);
-      }
-
-      return () => {
-        const index = watchers.indexOf(watcher);
-        if (index > -1) {
-          watchers.splice(index, 1);
-        }
-      };
-    };
-
     if (isObject(key) && !Array.isArray(key)) {
-      const opts = callback as WatchOptions;
       const unwatchers = Object.entries(key).map(([path, pathCallback]) => {
         if (typeof pathCallback !== 'function') {
           throw new Error(`callback for path '${path}' must be a function`);
         }
-        return processWatcher(path, pathCallback, opts);
+        const paths = getPaths(path);
+        if (getIn(state as T, paths) === undefined) {
+          console.warn(`Trying to watch item ${path} but it doesn't exist`);
+        }
+        const id = getIdPath(paths);
+        const watcher = { key: id, callback: pathCallback, paths };
+        watchers.push(watcher);
+        return () => {
+          const index = watchers.indexOf(watcher);
+          if (index > -1) {
+            watchers.splice(index, 1);
+          }
+        };
       });
-      return () => unwatchers.forEach((unwatch) => unwatch());
+      return () => unwatchers.forEach(unwatch => unwatch());
     }
 
     if (typeof key === 'string') {
       if (typeof callback !== 'function') {
         throw new Error('callback must be a function');
       }
-      return processWatcher(key, callback, options);
+      const paths = getPaths(key);
+      if (getIn(state, paths) === undefined) {
+        console.warn(`Trying to watch item ${key} but it doesn't exist`);
+      }
+      const id = getIdPath(paths);
+      const watcher = { key: id, callback, paths };
+      watchers.push(watcher);
+      return () => {
+        const index = watchers.indexOf(watcher);
+        if (index > -1) {
+          watchers.splice(index, 1);
+        }
+      };
     }
 
     throw new Error('watch: first argument must be a string path or an object with path-callback pairs');
@@ -269,7 +269,8 @@ const AnyState = function <T extends object>(initialized: T) {
 };
 
 export const createStore = <T extends object>(initialState?: T) => {
-  const anyState = AnyState(clonedValues(initialState || {} as T));
+  const anyState = AnyState(clonedValues(initialState || ({} as T)));
+  connectDevTools(anyState.getState() as T, anyState.setState);
   return anyState;
 };
 

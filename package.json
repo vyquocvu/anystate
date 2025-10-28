@@ -55,5 +55,5 @@
       "path": "dist/bundle.js",
       "limit": "5 kB"
     }
-  ],
+  ]
 }

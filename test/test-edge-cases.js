@@ -45,6 +45,35 @@ describe('Edge Case Testing', () => {
       assert.strictEqual(watchCount, 0);
     });
 
+    it('should trigger watcher immediately with set option', () => {
+      const store = createStore({ a: 1 });
+      let watchCount = 0;
+      store.watch('a', (newValue, oldValue) => {
+        watchCount++;
+        assert.strictEqual(newValue, 1);
+        assert.strictEqual(oldValue, undefined);
+      }, { set: true });
+      assert.strictEqual(watchCount, 1);
+    });
+
+    it('should trigger watcher immediately with set option for object-based watcher', () => {
+      const store = createStore({ a: 1, b: 2 });
+      let watchCount = 0;
+      store.watch({
+        'a': (newValue, oldValue) => {
+          watchCount++;
+          assert.strictEqual(newValue, 1);
+          assert.strictEqual(oldValue, undefined);
+        },
+        'b': (newValue, oldValue) => {
+          watchCount++;
+          assert.strictEqual(newValue, 2);
+          assert.strictEqual(oldValue, undefined);
+        }
+      }, { set: true });
+      assert.strictEqual(watchCount, 2);
+    });
+
     it('should handle unwatching inside a watcher', () => {
       const store = createStore({ a: 0 });
       let unwatch;

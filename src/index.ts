@@ -1,6 +1,7 @@
 import { trackPerformance, trackMemory } from './performance';
 import type { Key, TPath, WatchCallback, WatchObject } from './type';
 import { connectDevTools, sendToDevTools } from './devtools';
+import { History, Action } from './history';
 
 const isObject = (value: any): value is object => {
   return value !== null && typeof value === 'object';
@@ -68,6 +69,8 @@ const getIdPath = (paths: Key[]): string => {
 const AnyState = function <T extends object>(initialized: T) {
   const pristineState = clonedValues(initialized);
   let isBatching = false;
+  let isRestoringHistory = false;
+  const history = new History(clonedValues(initialized));
   type Watcher<V = any> = {
     key: string;
     paths: Key[];
@@ -127,6 +130,9 @@ const AnyState = function <T extends object>(initialized: T) {
       }
     });
     sendToDevTools('setState', state);
+    if (state && !isRestoringHistory) {
+      history.record(state);
+    }
   });
 
   const reset = () => {
@@ -158,6 +164,9 @@ const AnyState = function <T extends object>(initialized: T) {
 
     setIn(state, paths, value);
     sendToDevTools(`setItem: ${key.toString()}`, state);
+    if (state && !isRestoringHistory) {
+      history.record(state);
+    }
   });
 
   const getItem = trackPerformance('getItem', <V = any>(path: TPath): V | undefined => {
@@ -255,6 +264,38 @@ const AnyState = function <T extends object>(initialized: T) {
     throw new Error('watch: first argument must be a string path or an object with path-callback pairs');
   };
 
+  const undo = () => {
+    const prevState = history.undo();
+    if (prevState) {
+      isRestoringHistory = true;
+      setState(prevState);
+      isRestoringHistory = false;
+    }
+  };
+
+  const redo = () => {
+    const nextState = history.redo();
+    if (nextState) {
+      isRestoringHistory = true;
+      setState(nextState);
+      isRestoringHistory = false;
+    }
+  };
+
+  const createSnapshot = () => {
+    return JSON.stringify(state);
+  };
+
+  const restoreSnapshot = (snapshot: string) => {
+    setState(JSON.parse(snapshot));
+  };
+
+  const replayAction = (action: Action) => {
+    if (action.type === 'SET_ITEM') {
+      setItem(action.payload.key, action.payload.value);
+    }
+  };
+
   return {
     setState,
     setItem,
@@ -265,6 +306,11 @@ const AnyState = function <T extends object>(initialized: T) {
     logMemoryUsage,
     batch,
     atomic,
+    undo,
+    redo,
+    createSnapshot,
+    restoreSnapshot,
+    replayAction,
   };
 };
 

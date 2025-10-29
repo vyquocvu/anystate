@@ -1,6 +1,7 @@
 import { trackPerformance, trackMemory } from './performance';
-import type { Key, TPath, WatchCallback, WatchObject } from './type';
+import type { Key, TPath, WatchCallback, WatchObject, Middleware } from './type';
 import { connectDevTools, sendToDevTools } from './devtools';
+import { applyMiddleware } from './middleware';
 
 const isObject = (value: any): value is object => {
   return value !== null && typeof value === 'object';
@@ -65,7 +66,10 @@ const getIdPath = (paths: Key[]): string => {
   return paths.join('/');
 };
 
-const AnyState = function <T extends object>(initialized: T) {
+const AnyState = function <T extends object>(
+  initialized: T,
+  middlewares: Middleware<T>[] = []
+) {
   const pristineState = clonedValues(initialized);
   let isBatching = false;
   type Watcher<V = any> = {
@@ -114,7 +118,9 @@ const AnyState = function <T extends object>(initialized: T) {
     return clonedValues(state);
   });
 
-  const setState = trackPerformance('setState', (newState: T) => {
+  const middlewareWrapper = applyMiddleware(middlewares, getState);
+
+  const _setState = (newState: T) => {
     const shallowState = clonedValues(state);
     state = new Proxy(newState, validator()) as T;
     watchers.forEach((watcher) => {
@@ -127,14 +133,16 @@ const AnyState = function <T extends object>(initialized: T) {
       }
     });
     sendToDevTools('setState', state);
-  });
+  };
+
+  const setState = trackPerformance('setState', middlewareWrapper(_setState));
 
   const reset = () => {
     isBatching = false;
     setState(clonedValues(pristineState));
   };
 
-  const setItem = trackPerformance('setItem', (key: TPath, value: any) => {
+  const _setItem = (key: TPath, value: any) => {
     let paths: Key[] = [];
     if (typeof key !== 'string' && typeof key !== 'number' && !Array.isArray(key)) {
       throw new Error('setItem: key must be a string, number, or an array of keys');
@@ -158,7 +166,9 @@ const AnyState = function <T extends object>(initialized: T) {
 
     setIn(state, paths, value);
     sendToDevTools(`setItem: ${key.toString()}`, state);
-  });
+  };
+
+  const setItem = trackPerformance('setItem', middlewareWrapper(_setItem));
 
   const getItem = trackPerformance('getItem', <V = any>(path: TPath): V | undefined => {
     let paths: Key[];
@@ -268,8 +278,14 @@ const AnyState = function <T extends object>(initialized: T) {
   };
 };
 
-export const createStore = <T extends object>(initialState?: T) => {
-  const anyState = AnyState(clonedValues(initialState || ({} as T)));
+export const createStore = <T extends object>(
+  initialState?: T,
+  middlewares: Middleware<T>[] = []
+) => {
+  const anyState = AnyState(
+    clonedValues(initialState || ({} as T)),
+    middlewares
+  );
   connectDevTools(anyState.getState() as T, anyState.setState);
   return anyState;
 };

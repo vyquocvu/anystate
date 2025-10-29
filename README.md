@@ -729,6 +729,12 @@ Each example demonstrates:
 - Change watching and UI reactivity
 - Framework-specific integration patterns
 
+## Resources
+
+- **Interactive Examples & Playground** - *Coming Soon*
+- **Video Tutorials** - *Coming Soon*
+- **Advanced Patterns Guide** - *Coming Soon*
+
 ## Development
 
 ### Setup
